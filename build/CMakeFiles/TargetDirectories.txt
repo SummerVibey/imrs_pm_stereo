@@ -1,0 +1,9 @@
+/home/yons/PatchMatchStereo/build/CMakeFiles/rebuild_cache.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/edit_cache.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/2vs_texture_test.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/PatchMatchStereoCuda.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/PatchMatchStereo.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/patch_match_demo.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/stereo_texture_test.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/stereo_cuda_test.dir
+/home/yons/PatchMatchStereo/build/CMakeFiles/mvs_texture_test.dir
