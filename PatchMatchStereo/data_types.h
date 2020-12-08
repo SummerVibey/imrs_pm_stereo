@@ -3,6 +3,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 
 #include "global_malloc.h"
 #include "math_utils.h"
@@ -58,7 +59,7 @@ struct PatchMatchOptions : public GlobalMalloc
 	float	max_disparity;		// ����Ӳ�
 
 	float	sigma_s;			//
-  float sigma_r;       
+  float sigma_c;       
 	float	alpha;				// alpha ���ƶ�ƽ������
 	float	tau_col;			// tau for color	���ƶȼ�����ɫ�ռ�ľ��Բ���½ض���ֵ
 	float	tau_grad;			// tau for gradient ���ƶȼ����ݶȿռ�ľ��Բ��½ض���ֵ
@@ -74,7 +75,7 @@ struct PatchMatchOptions : public GlobalMalloc
 	bool	is_integer_disp;	// �Ƿ�Ϊ�������Ӳ�
 	
 	PatchMatchOptions() : 
-    patch_size(35), min_disparity(0.0f), max_disparity(1.0f), sigma_s(3.0f), sigma_r(10.0f), alpha(0.9f), tau_col(10.0f),
+    patch_size(35), min_disparity(0.0f), max_disparity(0.5f), sigma_s(3.0f), sigma_c(10.0f), alpha(0.9f), tau_col(10.0f),
     tau_grad(2.0f), num_iters(3), is_check_lr(false), lrcheck_thres(0),
     is_fill_holes(false), is_fource_fpw(false), is_integer_disp(false) {}
 
@@ -86,7 +87,7 @@ struct PatchMatchOptions : public GlobalMalloc
     printf("min_disparity: %f\n", min_disparity);
     printf("max_disparity: %f\n", max_disparity);
     printf("      sigma_s: %f\n", sigma_s);
-    printf("      sigma_r: %f\n", sigma_r);
+    printf("      sigma_c: %f\n", sigma_c);
     printf("        alpha: %f\n", alpha);
     printf("      tau_col: %f\n", tau_col);
     printf("     tau_grad: %f\n", tau_grad);
@@ -377,12 +378,33 @@ public:
 
 struct PlaneState : public GlobalMalloc
 {
-  float inv_depth_;
-  float normal_x_;
-  float normal_y_;
-  float normal_z_;
-  PlaneState(float inv_depth, float normal_x, float normal_y, float normal_z)
-  : inv_depth_(inv_depth), normal_x_(normal_x), normal_y_(normal_y), normal_z_(normal_z) {}
+  float idp_;
+  float nx_;
+  float ny_;
+  float nz_;
+  PlaneState() {}
+  PlaneState(float idp, float nx, float ny, float nz)
+  : idp_(idp), nx_(nx), ny_(ny), nz_(nz) {}
+};
+
+struct Plane : public GlobalMalloc
+{
+  float a_, b_, c_;
+  
+  Plane(float a, float b, float c): a_(a), b_(b), c_(c) {}
+
+  float to_inverse_depth(const int& x, const int& y) const
+	{
+    return a_ * x + b_ * y + c_;
+	}
+
+	/** \brief ��ȡƽ��ķ��� */
+	Vector3f to_normal() const
+	{
+		Vector3f n(a_, b_, -1.0f);
+		n.normalize();
+		return n;
+	}
 };
 
 class MultiViewGeometryParams : public GlobalMalloc
@@ -397,11 +419,38 @@ public:
     cv::Mat_<float> T34(3, 4);
     cv::hconcat(R, t, T34);
     cv::Mat_<float> P = K * T34;
-    cv::Mat_<float> Pinv = (P.t() * P).inv() * P.t();
     memcpy(P_, (float*)P.data, 12*sizeof(float));
     memcpy(K_, (float*)K.data, 9*sizeof(float));
     memcpy(R_, (float*)R.data, 9*sizeof(float));
     memcpy(t_, (float*)t.data, 3*sizeof(float));
+    Print();
+  }
+  MultiViewGeometryParams(const cv::Mat_<float> &P)
+  {
+    cv::Mat K, R, t4, t;
+    cv::decomposeProjectionMatrix(P, K, R, t4);
+    t = t4(cv::Range(0, 3), cv::Range(0, 1)) / t4.at<float>(3, 0);
+    checkCudaErrors(cudaMallocManaged(&P_, sizeof(float) * 3 * 4));
+    checkCudaErrors(cudaMallocManaged(&K_, sizeof(float) * 3 * 3));
+    checkCudaErrors(cudaMallocManaged(&R_, sizeof(float) * 3 * 3));
+    checkCudaErrors(cudaMallocManaged(&t_, sizeof(float) * 3 * 1));
+    cv::Mat_<float> T34(3, 4);
+    cv::hconcat(R, t, T34);
+    memcpy(P_, (float*)P.data, 12*sizeof(float));
+    memcpy(K_, (float*)K.data, 9*sizeof(float));
+    memcpy(R_, (float*)R.data, 9*sizeof(float));
+    memcpy(t_, (float*)t.data, 3*sizeof(float));
+    // Print();
+  }
+  ~MultiViewGeometryParams()
+  {
+    cudaFree(P_);
+    cudaFree(K_);
+    cudaFree(R_);
+    cudaFree(t_);
+  }
+  void Print()
+  {
     printf("project matrix:\n");
     for(int i = 0; i < 3; ++i) {
       for(int j = 0; j < 4; ++j) {
@@ -416,15 +465,19 @@ public:
       }
       std::cout << std::endl;
     }
-  }
-  ~MultiViewGeometryParams()
-  {
-    cudaFree(P_);
-    cudaFree(K_);
-    cudaFree(R_);
-    cudaFree(t_);
-  }
-  
+    printf("rotation matrix:\n");
+    for(int i = 0; i < 3; ++i) {
+      for(int j = 0; j < 3; ++j) {
+        std::cout << R_[i*3+j] << "  ";
+      }
+      std::cout << std::endl;
+    }
+    printf("translation matrix:\n");
+    for(int j = 0; j < 3; ++j) {
+      std::cout << t_[j] << "  ";
+    }
+    std::cout << std::endl;
+  }  
   float *P_;
   float *K_;
   float *R_;
@@ -442,6 +495,12 @@ public:
     height_ = height;
     params_ = new MultiViewGeometryParams(K, R, t);
   }
+  ViewSpace(const cv::Mat_<float> &P, int height, int width)
+  {
+    width_ = width;
+    height_ = height;
+    params_ = new MultiViewGeometryParams(P);
+  }
   ~ViewSpace()
   {
     DestroyTextureObject(tex_, arr_);
@@ -455,10 +514,10 @@ public:
   
 };
 
-class ReferenceViewSpace : public ViewSpace
+class RefViewSpace : public ViewSpace
 {
 public:
-  ReferenceViewSpace(const cv::Mat_<float> &K, const cv::Mat_<float> &R, const cv::Mat_<float> &t, int height, int width) 
+  RefViewSpace(const cv::Mat_<float> &K, const cv::Mat_<float> &R, const cv::Mat_<float> &t, int height, int width) 
   {
     width_ = width;
     height_ = height;
@@ -468,12 +527,21 @@ public:
     checkCudaErrors(cudaMallocManaged((void **)&cs_, sizeof(curandState) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&plane_, sizeof(PlaneState) * width_ * height_));
   }
-  ~ReferenceViewSpace()
+  RefViewSpace(const cv::Mat_<float> &P, int height, int width) 
   {
-    checkCudaErrors(cudaFree(cost_));
+    width_ = width;
+    height_ = height;
+    params_ = new MultiViewGeometryParams(P);
+    checkCudaErrors(cudaMallocManaged((void **)&cost_, sizeof(float) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&cs_, sizeof(curandState) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&plane_, sizeof(PlaneState) * width_ * height_));
+  }
+  ~RefViewSpace()
+  {
+    DestroyTextureObject(tex_, arr_);
     checkCudaErrors(cudaFree(cs_));
     checkCudaErrors(cudaFree(plane_));
-    DestroyTextureObject(tex_, arr_);
+    checkCudaErrors(cudaFree(cost_));
     delete params_;
   }
 
@@ -502,10 +570,10 @@ public:
     // }
   }
 
-  void Match();
+  void Match(cv::Mat &depth, cv::Mat &normal);
 
 
-  ReferenceViewSpace *ref_;
+  RefViewSpace *ref_;
   // std::vector<ViewSpace*> src_;
   ViewSpace *src_[MAX_IMAGES_SIZE];
   int image_size_;

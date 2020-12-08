@@ -49,6 +49,13 @@ public:
 		destroy();
 	}
 
+  T* ptr(size_t n) const {
+    return &m_data[n];
+  }
+
+  T& at(size_t n) {
+    return m_data[n];
+  }
 
 	void allocate(size_t n){
 		if(m_data && m_size >= n)

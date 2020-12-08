@@ -147,9 +147,9 @@ __device__ __forceinline__ float ComputeCostPointCuda(
   const int& x, const int& y, const float& d, const PatchMatchOptions *options, const int& width)
 {
   const float xr = x - d;
-  if (xr < 0.0f || xr >= static_cast<float>(width)) {
-    return (1 - options->alpha) * options->tau_col + options->alpha * options->tau_grad;
-  }
+  // if (xr < 0.0f || xr >= static_cast<float>(width)) {
+  //   return (1 - options->alpha) * options->tau_col + options->alpha * options->tau_grad;
+  // }
   // ��ɫ�ռ����
   Vector3f col_p, col_q;
   GetColorCuda(img_left, &col_p, x, y, width);
@@ -218,11 +218,17 @@ __device__ __forceinline__ float ComputeCostRegionCuda(
       // ����Ȩֵ
       Vector3f col_q;
       GetColorCuda(img_left, &col_q, qx, qy, width);
+
+      const float dc = (fabs(col_p.x - col_q.x) + fabs(col_p.y - col_q.y) + fabs(col_p.z - col_q.z)) / 3.0f;
+      const float ds = abs(px - qx) + abs(py - qy);
+      // printf("dc=%f\n", dc);
+      // const float w = expf(-dc / options->gamma);
+      const float w = expf(-ds / options->sigma_s - dc / options->sigma_c);
       
       // const float dc = fabs((col_p.x * 0.299f + col_p.y * 0.587f + col_p.z * 0.114f) - (col_q.x * 0.299f + col_q.y * 0.587f + col_q.z * 0.114f));
       // const float w = expf(-(abs(px-qx) + abs(py-qy)) / options->gamma) * expf(-dc / options->gamma);
-      const float dc = fabs(col_p.z - col_q.z) + fabs(col_p.y - col_q.y) + fabs(col_p.x - col_q.x);
-      const float w = expf(-dc / options->sigma_r);
+      // const float dc = fabs(col_p.z - col_q.z) + fabs(col_p.y - col_q.y) + fabs(col_p.x - col_q.x);
+      // const float w = expf(-dc / options->sigma_c);
       // �ۺϴ���
       // Vector2f grad_q;
       // GetGradientCuda(grad_left, &grad_q, qx, yr, width);
@@ -232,9 +238,13 @@ __device__ __forceinline__ float ComputeCostRegionCuda(
   return cost;
 }
 
-__device__ __forceinline__ float ComputeCostRegionTexture(
-  cudaTextureObject_t img_left, cudaTextureObject_t img_right,
-  const int& px, const int& py, const DispPlane *p, const PatchMatchOptions *options, int height, int width) 
+__device__ __forceinline__ float ComputePMCostRegion(
+  cudaTextureObject_t img_left, 
+  cudaTextureObject_t img_right,
+  const int& px, const int& py, 
+  const DispPlane *p, 
+  const PatchMatchOptions *options, 
+  int height, int width) 
 {
   const int pat = options->patch_size / 2;
 
@@ -246,10 +256,10 @@ __device__ __forceinline__ float ComputeCostRegionTexture(
     for (int c = -pat; c <= pat; c+=1) {
       const int qx = px + c;
       // printf("x, y: %d, %d\n", qx, qy);
-      if (qy < 0 || qy > height - 1 || qx < 0 || qx > width - 1) {
-        // printf("skip\n");
-        continue;
-      }
+      // if (qy < 0 || qy > height - 1 || qx < 0 || qx > width - 1) {
+      //   // printf("skip\n");
+      //   continue;
+      // }
       // �����Ӳ�ֵ
       float dq;
       PlaneToDisparity(p, qx, qy, &dq);
@@ -265,7 +275,7 @@ __device__ __forceinline__ float ComputeCostRegionTexture(
       const float ds = abs(px - qx) + abs(py - qy);
       // printf("dc=%f\n", dc);
       // const float w = expf(-dc / options->gamma);
-      const float w = expf(-ds / options->sigma_s - dc / options->sigma_r);
+      const float w = expf(-ds / options->sigma_s - dc / options->sigma_c);
       // printf("weight=%f\n", w);
       // �ۺϴ���
       // Vector2f grad_q;
@@ -353,7 +363,7 @@ __global__ void GetInitialCostTexture(
 
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
   int center = x + y * width;
-  cost[center] = ComputeCostRegionTexture(img_left, img_right, x, y, &plane[center], options, height, width);
+  cost[center] = ComputePMCostRegion(img_left, img_right, x, y, &plane[center], options, height, width);
 }
 
 __global__ void GetInitialCostTexturePoint(
@@ -367,7 +377,7 @@ __global__ void GetInitialCostTexturePoint(
   int width)
 {
   int center = x + y * width;
-  cost[center] = ComputeCostRegionTexture(img_left, img_right, x, y, &plane[center], options, height, width);
+  cost[center] = ComputePMCostRegion(img_left, img_right, x, y, &plane[center], options, height, width);
 }
 
 __global__ void GetInitialCost(
@@ -402,7 +412,7 @@ void GetInitialCostHost(
   int width)
 {
   CostComputerPMSHost* cost_computer = new CostComputerPMSHost(color_left, color_right, grad_left, grad_right, width, height,
-    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_r,
+    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_c,
     options->alpha, options->tau_col, options->tau_grad);
 
   for(int y = 0; y < height; ++y) {
@@ -431,7 +441,7 @@ void GetInitialCostHostPoint(
   int width)
 {
   CostComputerPMSHost* cost_computer = new CostComputerPMSHost(color_left, color_right, grad_left, grad_right, width, height,
-    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_r,
+    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_c,
     options->alpha, options->tau_col, options->tau_grad);
 
 
@@ -510,7 +520,7 @@ __device__ __forceinline__ void SpatialPropagationTexture(
 
   DispPlane &plane_nb = plane[center_nb];
   // printf("Current State: %f, %f, %f, Current Cost: %f\n", plane_local.a, plane_local.b, plane_local.c, cost_local);
-  float cost_nb = ComputeCostRegionTexture(img_left, img_right, x, y, &plane_nb, options, height, width);
+  float cost_nb = ComputePMCostRegion(img_left, img_right, x, y, &plane_nb, options, height, width);
   // printf("Neighbor State: %f, %f, %f, Neighbor Cost: %f\n", plane_nb.a, plane_nb.b, plane_nb.c, cost_nb);
   if(cost_nb < cost_local) {
     cost_local = cost_nb;
@@ -597,7 +607,7 @@ __device__ __forceinline__ void PlaneRefinement(
     view_ray.y = (y - cy) / fy;
     view_ray.z = 1;
 
-    float dp = norm_rd.x * view_ray.x + norm_rd.y * view_ray.y + norm_rd.z * view_ray.z;
+    float dp = norm_p_new.x * view_ray.x + norm_p_new.y * view_ray.y + norm_p_new.z * view_ray.z;
     if(dp > 0) {
       norm_p_new.x = -norm_p_new.x;
       norm_p_new.y = -norm_p_new.y;
@@ -661,8 +671,8 @@ __device__ __forceinline__ void PlaneRefinementTexture(
 
 		const float d_p_new = d_p + disp_rd;
 		if (d_p_new < min_disp || d_p_new > max_disp) {
-			disp_update /= 6.0f;
-      norm_update /= 4.0f;
+			disp_update /= 2.0f;
+      norm_update /= 2.0f;
 			continue;
 		}
 
@@ -693,7 +703,7 @@ __device__ __forceinline__ void PlaneRefinementTexture(
     view_ray.y = (y - cy) / fy;
     view_ray.z = 1;
 
-    float dp = norm_rd.x * view_ray.x + norm_rd.y * view_ray.y + norm_rd.z * view_ray.z;
+    float dp = norm_p_new.x * view_ray.x + norm_p_new.y * view_ray.y + norm_p_new.z * view_ray.z;
     if(dp > 0) {
       norm_p_new.x = -norm_p_new.x;
       norm_p_new.y = -norm_p_new.y;
@@ -703,7 +713,7 @@ __device__ __forceinline__ void PlaneRefinementTexture(
     DispPlane plane_new;
     ConstructPlane(x, y, d_p_new, norm_p_new.x, norm_p_new.y, norm_p_new.z, &plane_new);
     // printf("Current State: %f, %f, %f, Current Cost: %f\n", plane_p.a, plane_p.b, plane_p.c, cost_p);
-    float cost_new = ComputeCostRegionTexture(img_left, img_right, x, y, &plane_new, options, height, width);
+    float cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
     // printf("New State: %f, %f, %f, New Cost: %f\n", plane_new.a, plane_new.b, plane_new.c, cost_new);
     if(cost_new < cost_p) {
       cost_p = cost_new;
@@ -712,8 +722,8 @@ __device__ __forceinline__ void PlaneRefinementTexture(
       plane_p.c = plane_new.c;
       // printf("Update, New Cost: %f\n", cost_new);
     }
-		disp_update /= 6.0f;
-		norm_update /= 4.0f;
+		disp_update /= 2.0f;
+		norm_update /= 2.0f;
 	}
 }
 
@@ -1042,6 +1052,78 @@ __global__ void PropagateInOrderTexture(
 	}
 }
 
+__global__ void PropagateForward(
+  cudaTextureObject_t img_left, 
+  cudaTextureObject_t img_right,  
+  DispPlane *plane, 
+  float *cost, 
+  curandState *cs,
+  const PatchMatchOptions *options,
+  const CalibrationParams *params,
+  int height, 
+  int width,
+  int direct)
+{
+  switch(direct)
+  {
+    // left to right
+    case 0:
+    {
+      int y = threadIdx.y;
+      if(y < 0 || y >= height) break;
+      for(int i = 1; i < width; ++i) {
+        int x = i;
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, -1, -1, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, -1, 0, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, -1, 1, options, params, height, width);
+        PlaneRefinementTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+      }
+    }
+    // up to bottom
+    case 1:
+    {
+      int x = threadIdx.x;
+      if(x < 0 || x >= width) break;
+      for(int i = 1; i < height; ++i) {
+        int y = i;
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, -1, -1, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, 0, -1, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, 1, -1, options, params, height, width);
+        PlaneRefinementTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+      }
+    }
+
+
+    // right to left
+    case 2:
+    {
+      int y = threadIdx.y;
+      if(y < 0 || y >= height) break;
+      for(int i = width - 1; i > 0; --i) {
+        int x = i;
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, 1, -1, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, 1, 0, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, 1, 1, options, params, height, width);
+        PlaneRefinementTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+      }
+    }
+
+    // bottom to up
+    case 3:
+    {
+      int x = threadIdx.x;
+      if(x < 0 || x >= width) break;
+      for(int i = height - 1; i > 0; --i) {
+        int y = i;
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, -1, 1, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, 0, 1, options, params, height, width);
+        SpatialPropagationTexture(img_left, img_right, plane, cost, x, y, 1, 1, options, params, height, width);
+        PlaneRefinementTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+      }
+    }
+  }
+}
+
 StereoMatcherCuda::StereoMatcherCuda(const int& width, const int& height, PatchMatchOptions *options, CalibrationParams *params)
 {
 	width_ = width;
@@ -1294,7 +1376,7 @@ bool StereoMatcherCuda::Match(const uint8_t* img_left, const uint8_t* img_right,
   return true;
 }
 
-bool StereoMatcherCuda::Match(const uint8_t* color_left, const uint8_t* color_right, float* disp_left, bool texture)
+bool StereoMatcherCuda::Match(const uint8_t* color_left, const uint8_t* color_right, cv::Mat &depth_img, cv::Mat &normal_img, bool texture)
 {
   printf("Start Texture!\n");
 
@@ -1335,12 +1417,60 @@ bool StereoMatcherCuda::Match(const uint8_t* color_left, const uint8_t* color_ri
     ShowDisparityAndNormalMap(plane_left_, height_, width_);
   }
 
+  // {
+  //   dim3 block_size_iter(1, height_);
+  //   dim3 grid_size_iter(1, 1);
+  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 0);
+  //   cudaDeviceSynchronize();
+  //   printf("Complete l2r!\n");
+  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
+  // }
+
+  // {
+  //   dim3 block_size_iter(width_, 1);
+  //   dim3 grid_size_iter(1, 1);
+  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 1);
+  //   cudaDeviceSynchronize();
+  //   printf("Complete u2b!\n");
+  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
+  // }
+
+  // {
+  //   dim3 block_size_iter(1, height_);
+  //   dim3 grid_size_iter(1, 1);
+  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 2);
+  //   cudaDeviceSynchronize();
+  //   printf("Complete r2l!\n");
+  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
+  // }
+
+  // {
+  //   dim3 block_size_iter(width_, 1);
+  //   dim3 grid_size_iter(1, 1);
+  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 3);
+  //   cudaDeviceSynchronize();
+  //   printf("Complete b2u!\n");
+  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
+  // }
+
+
   ShowDisparityAndNormalMap(plane_left_, height_, width_);
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess)
     printf("Error: %s\n", cudaGetErrorString(err));
 
   ShowCostAndHistogramMap(cost_left_, height_, width_);
+
+  depth_img = cv::Mat_<float>(height_, width_);
+  normal_img = cv::Mat_<cv::Vec3f>(height_, width_);
+  // ConvertPlaneToDepthAndNormal(ref_->plane_, depth, normal, height, width);
+  for(int i = 0; i < height_; ++i) {
+    for(int j = 0; j < width_; ++j) {
+      depth_img.at<float>(i,j) = params_->bf / plane_left_[i*width_+j].a * j + plane_left_[i*width_+j].b * i + plane_left_[i*width_+j].c;
+      Vector3f norm_ij = plane_left_[i*width_+j].to_normal();
+      normal_img.at<cv::Vec3f>(i,j) = cv::Vec3f(norm_ij.x, norm_ij.y, norm_ij.z);
+    }
+  }
 
   return true;
 }

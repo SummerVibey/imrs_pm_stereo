@@ -18,6 +18,7 @@ CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: ../PatchMatc
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: ../PatchMatchStereo/patch_match_cost.h
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: ../PatchMatchStereo/patch_match_cuda.h
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: ../PatchMatchStereo/texture_utils.h
+CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: ../PatchMatchStereo/viewer.h
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: /usr/local/cuda-10.0/include/builtin_types.h
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: /usr/local/cuda-10.0/include/channel_descriptor.h
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: /usr/local/cuda-10.0/include/crt/common_functions.h

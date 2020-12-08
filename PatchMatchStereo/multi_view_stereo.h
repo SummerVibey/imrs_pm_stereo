@@ -27,5 +27,15 @@
 #include "data_types.h"
 
 
+void TestHomographyWarpHost(const cv::Mat& K, const cv::Mat &R1, const cv::Mat &R2, const cv::Mat &t1, const cv::Mat &t2,
+  int x, int y, float depth, float normal[3]);
+
+void TestComputNCCHost(
+  const cv::Mat &img0, const cv::Mat &img1, 
+  const cv::Mat& K, 
+  const cv::Mat &R1, const cv::Mat &R2, 
+  const cv::Mat &t1, const cv::Mat &t2,
+  int x, int y, float depth, float normal[3],
+  const PatchMatchOptions *options);
 
 #endif

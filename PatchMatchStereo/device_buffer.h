@@ -24,21 +24,21 @@ private:
 	size_t m_size;
 
 public:
-	DeviceBuffer()
+	__device__ DeviceBuffer()
 		: m_data(nullptr)
 		, m_size(0)
 	{ }
 
-	explicit DeviceBuffer(size_t n)
+	__device__ explicit DeviceBuffer(size_t n)
 		: m_data(nullptr)
 		, m_size(0)
 	{
 		allocate(n);
 	}
 
-	DeviceBuffer(const DeviceBuffer&) = delete;
+	__device__ DeviceBuffer(const DeviceBuffer&) = delete;
 
-	DeviceBuffer(DeviceBuffer&& obj)
+	__device__ DeviceBuffer(DeviceBuffer&& obj)
 		: m_data(obj.m_data)
 		, m_size(obj.m_size)
 	{
@@ -46,12 +46,20 @@ public:
 		obj.m_size = 0;
 	}
 
-	~DeviceBuffer(){
+	__device__ ~DeviceBuffer(){
 		destroy();
 	}
 
+  __device__ T* ptr(size_t n) const {
+    return &m_data[n];
+  }
 
-	void allocate(size_t n){
+  __device__ T& at(size_t n) {
+    return m_data[n];
+  }
+
+
+	__device__ void allocate(size_t n){
 		if(m_data && m_size >= n)
 			return;
 		destroy();
@@ -59,7 +67,7 @@ public:
 		m_size = n;
 	}
 
-	void destroy(){
+	__device__ void destroy(){
 		if(m_data)
 			assert(cudaSuccess == cudaFree(m_data));
 
@@ -67,13 +75,13 @@ public:
 		m_size = 0;
 	}
 
-	void fillZero(){
+	__device__ void fillZero(){
 		assert(cudaSuccess == cudaMemset(m_data, 0, sizeof(T) * m_size));
 	}
 
-	DeviceBuffer& operator=(const DeviceBuffer&) = delete;
+	__device__ DeviceBuffer& operator=(const DeviceBuffer&) = delete;
 
-	DeviceBuffer& operator=(DeviceBuffer&& obj){
+	__device__ DeviceBuffer& operator=(DeviceBuffer&& obj){
 		m_data = obj.m_data;
 		m_size = obj.m_size;
 		obj.m_data = nullptr;
@@ -82,15 +90,15 @@ public:
 	}
 
 
-	size_t size() const {
+	__device__ size_t size() const {
 		return m_size;
 	}
 
-	const T *data() const {
+	__device__ const T *data() const {
 		return m_data;
 	}
 
-	T *data(){
+	__device__ T *data(){
 		return m_data;
 	}
 

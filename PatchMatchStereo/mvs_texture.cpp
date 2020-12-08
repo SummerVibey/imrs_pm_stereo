@@ -148,9 +148,6 @@ inline void ComputeHomography(
 
   const float ref_inv_fx = 1 / ref_fx, ref_inv_cx = -ref_cx / ref_fx,
               ref_inv_fy = 1 / ref_fy, ref_inv_cy = -ref_cy / ref_fy;
-
-  const float src_inv_fx = 1 / src_fx, src_inv_cx = -src_cx / src_fx,
-              src_inv_fy = 1 / src_fy, src_inv_cy = -src_cy / src_fy;
   
   const float pt3d[3] = {depth * (ref_inv_fx * x + ref_inv_cx), depth * (ref_inv_fy * y + ref_inv_cy), depth};
 
@@ -205,15 +202,9 @@ inline void ComputeHomographyEigen(
   const float &ref_fx = K_ref(0,0), &ref_fy = K_ref(1,1),
               &ref_cx = K_ref(0,2), &ref_cy = K_ref(1,2);
 
-  const float &src_fx = K_src(0,0), &src_fy = K_src(1,1),
-              &src_cx = K_src(0,2), &src_cy = K_src(1,2);
-
   const float ref_inv_fx = 1 / ref_fx, ref_inv_cx = -ref_cx / ref_fx,
               ref_inv_fy = 1 / ref_fy, ref_inv_cy = -ref_cy / ref_fy;
 
-  const float src_inv_fx = 1 / src_fx, src_inv_cx = -src_cx / src_fx,
-              src_inv_fy = 1 / src_fy, src_inv_cy = -src_cy / src_fy;
-  
   // const float pt3d[3] = {depth * (ref_inv_fx * x + ref_inv_cx), depth * (ref_inv_fy * y + ref_inv_cy), depth};
   Eigen::Vector3f pt3d(depth * (ref_inv_fx * x + ref_inv_cx), depth * (ref_inv_fy * y + ref_inv_cy), depth);
 
@@ -225,11 +216,11 @@ inline void ComputeHomographyEigen(
 
 }
 
-inline void HomogeneousWarp(const float mat[9], const float vec[2], float result[2]) 
+inline void HomogeneousWarp(const float mat[9], const float px, const float py, float &qx, float &qy) 
 {
-  const float inv_z = 1.0f / (mat[6] * vec[0] + mat[7] * vec[1] + mat[8]);
-  result[0] = inv_z * (mat[0] * vec[0] + mat[1] * vec[1] + mat[2]);
-  result[1] = inv_z * (mat[3] * vec[0] + mat[4] * vec[1] + mat[5]);
+  const float inv_z = 1.0f / (mat[6] * px + mat[7] * py + mat[8]);
+  qx = inv_z * (mat[0] * px + mat[1] * py + mat[2]);
+  qy = inv_z * (mat[3] * px + mat[4] * py + mat[5]);
 }
 
 int main(int argc, char** argv)
@@ -311,17 +302,31 @@ int main(int argc, char** argv)
   std::cout << "my H: " << std::endl << Hbe << std::endl;
 
   Eigen::Vector3f a(x, y, 1), b;
-  float ar[2] = {x, y}, br[2];
   b = H*a; b /= b(2);
   std::cout << "eigen result: " << b.transpose() << std::endl;
-  HomogeneousWarp(Hb, ar, br);
-  std::cout << "my H: " << br[0] << "  " << br[1] << std::endl;
+  float wx, wy;
+  HomogeneousWarp(Hb, x, y, wx, wy);
+  std::cout << "my H: " << wx << "  " << wy << std::endl;
+
+  // // TestComputNCCHost(img0)
+
+
   // int ref_index = 6;
   // int src_size = 2;
 
-  // PatchMatchOptions *options = new PatchMatchOptions();
+  PatchMatchOptions *options = new PatchMatchOptions();
 
-  // MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options);
+  MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options, height, width);
+
+  cv::Mat imgref = cv::imread(img_folder + "/" + img_files[0], cv::IMREAD_GRAYSCALE);
+  imgref.convertTo(imgref, CV_32F);
+  printf("Prepare to add source view!\n");
+  mvs_matcher->AddSourceView(imgref, camera_matrix, Rcws[0], tcws[0]);
+
+  cv::Mat imgsrc = cv::imread(img_folder + "/" + img_files[3], cv::IMREAD_GRAYSCALE);
+  imgsrc.convertTo(imgsrc, CV_32F);
+  printf("Prepare to add reference view!\n");
+  mvs_matcher->SetReferenceView(imgsrc, camera_matrix, Rcws[3], tcws[3]);
 
   // for(int idx = ref_index - src_size/2; idx <= ref_index + src_size/2; ++idx) {
   //   if(idx < 0) continue;
@@ -342,10 +347,10 @@ int main(int argc, char** argv)
   //   }
   // }
 
-  // mvs_matcher->Initialize();
+  mvs_matcher->InitializeKRT(0);
   // mvs_matcher->Run();
 
-  // delete mvs_matcher;
-  // delete options;
+  delete mvs_matcher;
+  delete options;
 
 }

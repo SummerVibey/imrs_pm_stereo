@@ -102,6 +102,18 @@ void ConvertPlaneToDepthAndNormal(const InvDepthPlane *plane, cv::Mat_<float>& i
   }
 }
 
+void ConvertPlaneToDepthAndNormal(const PlaneState *plane, cv::Mat_<float>& depth, cv::Mat_<cv::Vec3f>& normal, int height, int width)
+{
+  for(int i = 0; i < height; ++i) {
+    for(int j = 0; j < width; ++j) {
+      depth(i, j) = 180.0f / plane[i*width+j].idp_;
+      normal(i, j) = cv::Vec3f(plane[i*width+j].nx_, plane[i*width+j].ny_, plane[i*width+j].nz_);
+    }
+  }
+}
+
+
+
 
 void ShowDepthAndNormal(const PlaneState *plane_data, int height, int width)
 {
@@ -109,8 +121,12 @@ void ShowDepthAndNormal(const PlaneState *plane_data, int height, int width)
   cv::Mat_<cv::Vec3f> norm_img(height, width);
   for(int i = 0; i < height; ++i) {
     for(int j = 0; j < width; ++j) {
-      inv_depth_img(i, j) = plane_data[i*width+j].inv_depth_;
-      norm_img(i, j) = cv::Vec3f(plane_data[i*width+j].normal_x_, plane_data[i*width+j].normal_y_, plane_data[i*width+j].normal_z_);
+      const PlaneState *plane_ij = &plane_data[i*width+j];
+      // if(plane_ij->idp_ < 0.3f && plane_ij->idp_ > 0.01f)
+        inv_depth_img(i, j) = plane_ij->idp_;
+      // else 
+      //   inv_depth_img(i, j) = 0;
+      norm_img(i, j) = cv::Vec3f(plane_ij->nx_, plane_ij->ny_, plane_ij->nz_);
     }
   }
   

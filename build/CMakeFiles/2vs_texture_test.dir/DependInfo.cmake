@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/yons/PatchMatchStereo/PatchMatchStereo/2vs_texture.cpp" "/home/yons/PatchMatchStereo/build/CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o"
+  "/home/yons/imrs_pm_stereo/PatchMatchStereo/2vs_texture.cpp" "/home/yons/imrs_pm_stereo/build/CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -57,7 +57,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/yons/PatchMatchStereo/build/CMakeFiles/PatchMatchStereoCuda.dir/DependInfo.cmake"
+  "/home/yons/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereoCuda.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

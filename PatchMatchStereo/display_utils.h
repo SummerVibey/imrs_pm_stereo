@@ -1,7 +1,7 @@
 #ifndef DISPLAY_UTILS_H
 #define DISPLAY_UTILS_H
 
-#include "opencv2/core/core.hpp"
+#include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -22,6 +22,8 @@ void ConvertGradientForDisplay(const cv::Mat &grad, cv::Mat &grad_display);
 void ComputeHistForDisplay(const cv::Mat& img, cv::Mat &hist_display);
 
 void ConvertPlaneToDepthAndNormal(const InvDepthPlane *plane, cv::Mat_<float>& inv_depth, cv::Mat_<cv::Vec3f>& norm, int height, int width);
+
+void ConvertPlaneToDepthAndNormal(const PlaneState *plane, cv::Mat& depth, cv::Mat& normal, int height, int width);
 
 void ShowDepthAndNormal(const PlaneState *plane_data, int height, int width);
 

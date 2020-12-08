@@ -6,41 +6,43 @@
 
 #IncludeRegexTransform: 
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/PatchMatchStereo.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.h
 vector
 -
 pms_types.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/pms_types.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_types.h
 pms_propagation.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/pms_propagation.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_propagation.h
 display_utils.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/display_utils.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/display_utils.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/cost_computor.hpp
+/home/yons/imrs_pm_stereo/PatchMatchStereo/cost_computor.hpp
 pms_types.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/pms_types.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_types.h
 algorithm
 -
 stdio.h
 -
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/data_types.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/data_types.h
 opencv2/core/core.hpp
 -
 opencv2/imgproc/imgproc.hpp
 -
+opencv2/calib3d/calib3d.hpp
+-
 global_malloc.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/global_malloc.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/global_malloc.h
 math_utils.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/math_utils.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/math_utils.h
 texture_utils.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/texture_utils.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/texture_utils.h
 device_buffer.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/device_buffer.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/device_buffer.h
 global_buffer.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/global_buffer.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/global_buffer.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/device_buffer.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/device_buffer.h
 cuda.h
 -
 cuda_runtime.h
@@ -62,11 +64,11 @@ curand_kernel.h
 assert.h
 -
 helper_cuda.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/helper_cuda.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/helper_cuda.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/display_utils.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/display_utils.h
 opencv2/core/core.hpp
-/home/yons/PatchMatchStereo/PatchMatchStereo/opencv2/core/core.hpp
+-
 opencv2/features2d/features2d.hpp
 -
 opencv2/calib3d/calib3d.hpp
@@ -76,9 +78,9 @@ opencv2/imgproc/imgproc.hpp
 opencv2/highgui/highgui.hpp
 -
 data_types.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/data_types.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/data_types.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/global_buffer.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/global_buffer.h
 cuda.h
 -
 cuda_runtime.h
@@ -100,9 +102,9 @@ curand_kernel.h
 assert.h
 -
 helper_cuda.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/helper_cuda.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/helper_cuda.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/global_malloc.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/global_malloc.h
 iostream
 -
 cuda.h
@@ -124,9 +126,9 @@ cuda_gl_interop.h
 curand_kernel.h
 -
 helper_cuda.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/helper_cuda.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/helper_cuda.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/helper_cuda.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/helper_cuda.h
 stdlib.h
 -
 stdio.h
@@ -134,9 +136,9 @@ stdio.h
 string.h
 -
 helper_string.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/helper_string.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/helper_string.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/helper_string.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/helper_string.h
 stdio.h
 -
 stdlib.h
@@ -150,11 +152,11 @@ string.h
 strings.h
 -
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/main.cpp
+/home/yons/imrs_pm_stereo/PatchMatchStereo/main.cpp
 iostream
 -
 PatchMatchStereo.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/PatchMatchStereo.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.h
 chrono
 -
 stdio.h
@@ -162,19 +164,19 @@ stdio.h
 opencv2/opencv.hpp
 -
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/math_utils.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/math_utils.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/pms_propagation.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_propagation.h
 pms_types.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/pms_types.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_types.h
 cost_computor.hpp
-/home/yons/PatchMatchStereo/PatchMatchStereo/cost_computor.hpp
+/home/yons/imrs_pm_stereo/PatchMatchStereo/cost_computor.hpp
 random
 -
 display_utils.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/display_utils.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/display_utils.h
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/pms_types.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_types.h
 cstdint
 -
 limits
@@ -184,7 +186,7 @@ vector
 cmath
 -
 
-/home/yons/PatchMatchStereo/PatchMatchStereo/texture_utils.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/texture_utils.h
 cuda_runtime.h
 -
 cuda.h
@@ -198,7 +200,7 @@ vector_types.h
 opencv2/core/core.hpp
 -
 global_malloc.h
-/home/yons/PatchMatchStereo/PatchMatchStereo/global_malloc.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/global_malloc.h
 
 /usr/local/cuda-10.0/include/builtin_types.h
 device_types.h

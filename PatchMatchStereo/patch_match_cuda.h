@@ -49,7 +49,7 @@ public:
 	*/
 	bool Match(const uint8_t* img_left, const uint8_t* img_right, float* disp_left);
 
-  bool Match(const uint8_t* color_left, const uint8_t* color_right, float* disp_left, bool texture);
+  bool Match(const uint8_t* color_left, const uint8_t* color_right, cv::Mat &depth_img, cv::Mat &normal_img, bool texture);
 
 	/**
 	* \brief ����

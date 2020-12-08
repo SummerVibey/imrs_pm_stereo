@@ -16,6 +16,7 @@ CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: ../Pat
 CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: ../PatchMatchStereo/patch_match_cuda.h
 CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: ../PatchMatchStereo/stereo_texture.cpp
 CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: ../PatchMatchStereo/texture_utils.h
+CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: ../PatchMatchStereo/viewer.h
 CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: /usr/local/cuda-10.0/include/builtin_types.h
 CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: /usr/local/cuda-10.0/include/channel_descriptor.h
 CMakeFiles/stereo_texture_test.dir/PatchMatchStereo/stereo_texture.cpp.o: /usr/local/cuda-10.0/include/crt/common_functions.h

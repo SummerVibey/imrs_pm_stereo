@@ -1,4 +1,4 @@
-# Install script for directory: /home/yons/PatchMatchStereo
+# Install script for directory: /home/yons/imrs_pm_stereo
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/yons/PatchMatchStereo/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/yons/imrs_pm_stereo/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

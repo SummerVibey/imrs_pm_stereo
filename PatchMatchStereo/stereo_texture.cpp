@@ -11,6 +11,7 @@
 
 #include "patch_match_cuda.h"
 #include "device_utils.h"
+#include "viewer.h"
 
 using namespace std::chrono;
 
@@ -114,10 +115,21 @@ int main(int argc, char** argv)
   calib["P0"] >> P0;
   calib["P1"] >> P1;
   int width, height;
+
+  
+  width = img_left.cols;
+  height = img_left.rows;
+
+  float fx = 500.0f, fy = 500.0f, cx = (float)width / 2.0f, cy = (float)height / 2.0f;
+  
   float bf;
-  calib["width"] >> width;
-  calib["height"] >> height;
+  // calib["width"] >> width;
+  // calib["height"] >> height;
   calib["bf"] >> bf;
+
+  P0 = cv::Mat_<float>(3, 4) << (fx, 0, cx, 0, 0, fy, cy, 0, 0, 0, 1, 0);
+  P1 = cv::Mat_<float>(3, 4) << (fx, 0, cx, -bf, 0, fy, cy, 0, 0, 0, 1, 0);
+  cv::Mat K = P0.rowRange(0,3).colRange(0,3);
   SelectCudaDevice();
 
   cv::Mat color_left = cv::imread(path_left, cv::IMREAD_COLOR);
@@ -159,7 +171,7 @@ int main(int argc, char** argv)
 	pms_options->patch_size = 35;
 	pms_options->min_disparity = 0.0f;
 	pms_options->max_disparity = 64.0f;
-	pms_options->sigma_r = 10.0f;
+	pms_options->sigma_c = 10.0f;
   pms_options->sigma_s = 3.0f;
 	pms_options->alpha = 0.9f;
 	pms_options->tau_col = 10.0f;
@@ -183,8 +195,9 @@ int main(int argc, char** argv)
   ConstructTexture(img_left, matcher->tex_left_, matcher->array_left_);
   ConstructTexture(img_right, matcher->tex_right_, matcher->array_right_);
 
-
-  matcher->Match(bytes_left_device, bytes_right_device, disparity, true);
+  cv::Mat depth_img, normal_img;
+  matcher->Match(bytes_left_device, bytes_right_device, depth_img, normal_img, true);
+  ConvertDepthToCloud(color_left, depth_img, K, height, width);
 	// // printf("PatchMatch Initializing...");
 	// std::cout << "PatchMatch Initializing..." << std::endl;
 	// auto start = std::chrono::steady_clock::now();
