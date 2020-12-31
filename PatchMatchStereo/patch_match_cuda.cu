@@ -5,6 +5,11 @@ __device__ __forceinline__ float CurandBetween(curandState *cs, float min, float
   return (curand_uniform(cs) * (max-min) + min);
 }
 
+__device__ inline float DotProduct3(const float vec1[3], const float vec2[3]) 
+{
+  return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
+}
+
 __device__ __forceinline__ void Normalize3f(Vector3f *vec)
 {
   const float inv_sqr2 = 1.0f / norm3f(vec->x, vec->y, vec->z);
@@ -33,7 +38,116 @@ __device__ __forceinline__ void PlaneToNormal(const DispPlane *plane, Vector3f *
   Normalize3f(norm);
 }
 
+__device__ __forceinline__ float BilateralWeight(
+  const float x_diff, 
+  const float y_diff, 
+  const float color_diff, 
+  const float sigma_s, 
+  const float sigma_c)
+{
+  // return expf( -(x_diff * x_diff + y_diff * y_diff) / (2 * sigma_s * sigma_s) - color_diff * color_diff / (2 * sigma_c * sigma_c));
+  return expf( -sqrtf(x_diff * x_diff + y_diff * y_diff) / sigma_s - abs(color_diff) / sigma_c);
+}
 
+__device__ __forceinline__ float GenerateRandomDisp(
+  curandState *curand,
+  const float min_disp,
+  const float max_disp
+)
+{
+  return CurandBetween(curand, min_disp, max_disp);
+}
+
+__device__ __forceinline__ void GenerateRandomNormal(
+  float normal[3],
+  curandState *curand,
+  int x, int y,
+  const float *pmat
+)
+{
+  float q1 = 1.0f;
+  float q2 = 1.0f;
+  float sum = 2.0f;
+  while(sum >= 1.0f) {
+    q1 = CurandBetween(curand, -1.0f, 1.0f);
+    q2 = CurandBetween(curand, -1.0f, 1.0f);
+    sum = q1 * q1 + q2 * q2;
+  }
+  const float sqr = sqrtf(1.0f - sum);
+  float norm_rd[3];
+  norm_rd[0] = 2.0f * q1 * sqr;
+  norm_rd[1] = 2.0f * q2 * sqr;
+  norm_rd[2] = 1.0f - 2.0f * sum;
+
+  float view_ray[3];
+  const float& fx = pmat[0], &fy = pmat[5], &cx = pmat[2], &cy = pmat[6];
+
+  view_ray[0] = (x - cx) / fx;
+  view_ray[1] = (y - cy) / fy;
+  view_ray[2] = 1;
+
+  float dp = norm_rd[0] * view_ray[0] + norm_rd[1] * view_ray[1] + norm_rd[2] * view_ray[2];
+  if(dp > 0) {
+    norm_rd[0] = -norm_rd[0];
+    norm_rd[1] = -norm_rd[1];
+    norm_rd[2] = -norm_rd[2];
+  }
+
+  normal[0] = norm_rd[0];
+  normal[1] = norm_rd[1];
+  normal[2] = norm_rd[2];
+}
+
+__device__ __forceinline__ float PerturbDisp(
+  const float fdisp,
+  const float perturbation,
+  curandState *curand
+)
+{
+  return fdisp + CurandBetween(curand, -perturbation * 0.5f, perturbation * 0.5f);
+}
+
+__device__ __forceinline__ void PerturbNormal(
+  const float normal[3],
+  const float perturbation,
+  curandState* curand,
+  float perturbed_normal[3],
+  int x, int y,
+  const float *pmat
+)
+{
+  // Perturbation rotation angles.
+  float norm_rd[3];
+  norm_rd[0] = CurandBetween(curand, -0.5f, 0.5f) * perturbation;
+  norm_rd[1] = CurandBetween(curand, -0.5f, 0.5f) * perturbation;
+  norm_rd[2] = CurandBetween(curand, -0.5f, 0.5f) * perturbation;
+
+  perturbed_normal[0] = normal[0] + norm_rd[0];
+  perturbed_normal[1] = normal[1] + norm_rd[1];
+  perturbed_normal[2] = normal[2] + norm_rd[2];
+
+  // Make sure normal has unit norm.
+  const float inv_norm = sqrt(DotProduct3(perturbed_normal, perturbed_normal));
+  perturbed_normal[0] *= inv_norm;
+  perturbed_normal[1] *= inv_norm;
+  perturbed_normal[2] *= inv_norm;
+
+  // Make sure the perturbed normal is still looking in the same direction as
+  // the viewing direction, otherwise try again but with smaller perturbation.
+  float view_ray[3];
+  const float& fx = pmat[0], &fy = pmat[5], &cx = pmat[2], &cy = pmat[6];
+
+  view_ray[0] = (x - cx) / fx;
+  view_ray[1] = (y - cy) / fy;
+  view_ray[2] = 1;
+
+  float dp = DotProduct3(perturbed_normal, view_ray);
+  if (dp >= 0.0f) {
+    perturbed_normal[0] = -perturbed_normal[0];
+    perturbed_normal[1] = -perturbed_normal[1];
+    perturbed_normal[2] = -perturbed_normal[2];
+  }
+}
 
 __device__ __forceinline__ void RandomPointPlane(
   DispPlane *local_plane, 
@@ -43,36 +157,40 @@ __device__ __forceinline__ void RandomPointPlane(
   float mind, float maxd, 
   float *P)
 {
-  float disp_rd = CurandBetween(local_cs, mind, maxd);
+  // float disp_rd = CurandBetween(local_cs, mind, maxd);
 
-  float q1 = 1.0f;
-  float q2 = 1.0f;
-  float sum = 2.0f;
-  while(sum >= 1.0f) {
-    q1 = CurandBetween(local_cs, -1.0f, 1.0f);
-    q2 = CurandBetween(local_cs, -1.0f, 1.0f);
-    sum = q1 * q1 + q2 * q2;
-  }
-  const float sqr = sqrtf(1.0f - sum);
-  Vector3f norm_rd;
-  norm_rd.x = 2.0f * q1 * sqr;
-  norm_rd.y = 2.0f * q2 * sqr;
-  norm_rd.z = 1.0f - 2.0f * sum;
+  // float q1 = 1.0f;
+  // float q2 = 1.0f;
+  // float sum = 2.0f;
+  // while(sum >= 1.0f) {
+  //   q1 = CurandBetween(local_cs, -1.0f, 1.0f);
+  //   q2 = CurandBetween(local_cs, -1.0f, 1.0f);
+  //   sum = q1 * q1 + q2 * q2;
+  // }
+  // const float sqr = sqrtf(1.0f - sum);
+  // Vector3f norm_rd;
+  // norm_rd.x = 2.0f * q1 * sqr;
+  // norm_rd.y = 2.0f * q2 * sqr;
+  // norm_rd.z = 1.0f - 2.0f * sum;
 
-  Vector3f view_ray;
-  const float& fx = P[0], &fy = P[5], &cx = P[2], &cy = P[6];
+  // Vector3f view_ray;
+  // const float& fx = P[0], &fy = P[5], &cx = P[2], &cy = P[6];
 
-  view_ray.x = (x - cx) / fx;
-  view_ray.y = (y - cy) / fy;
-  view_ray.z = 1;
+  // view_ray.x = (x - cx) / fx;
+  // view_ray.y = (y - cy) / fy;
+  // view_ray.z = 1;
 
-  float dp = norm_rd.x * view_ray.x + norm_rd.y * view_ray.y + norm_rd.z * view_ray.z;
-  if(dp > 0) {
-    norm_rd.x = -norm_rd.x;
-    norm_rd.y = -norm_rd.y;
-    norm_rd.z = -norm_rd.z;
-  }
-  ConstructPlane(x, y, disp_rd, norm_rd.x, norm_rd.y, norm_rd.z, local_plane);
+  // float dp = norm_rd.x * view_ray.x + norm_rd.y * view_ray.y + norm_rd.z * view_ray.z;
+  // if(dp > 0) {
+  //   norm_rd.x = -norm_rd.x;
+  //   norm_rd.y = -norm_rd.y;
+  //   norm_rd.z = -norm_rd.z;
+  // }
+  // ConstructPlane(x, y, disp_rd, norm_rd.x, norm_rd.y, norm_rd.z, local_plane);
+  float disp_rd = GenerateRandomDisp(local_cs, mind, maxd);
+  float norm_rd[3];
+  GenerateRandomNormal(norm_rd, local_cs, x, y, P);
+  ConstructPlane(x, y, disp_rd, norm_rd[0], norm_rd[1], norm_rd[2], local_plane);  
 }
 
 // checked
@@ -256,10 +374,9 @@ __device__ __forceinline__ float ComputePMCostRegion(
     for (int c = -pat; c <= pat; c+=1) {
       const int qx = px + c;
       // printf("x, y: %d, %d\n", qx, qy);
-      // if (qy < 0 || qy > height - 1 || qx < 0 || qx > width - 1) {
-      //   // printf("skip\n");
-      //   continue;
-      // }
+      if (qy < 0 || qy > height - 1 || qx < 0 || qx > width - 1) {
+        continue;
+      }
       // �����Ӳ�ֵ
       float dq;
       PlaneToDisparity(p, qx, qy, &dq);
@@ -280,7 +397,7 @@ __device__ __forceinline__ float ComputePMCostRegion(
       // �ۺϴ���
       // Vector2f grad_q;
       // GetGradientCuda(grad_left, &grad_q, qx, yr, width);
-
+      float bilateral_weight = BilateralWeight(c, r, col_p - col_q, options->sigma_s, options->sigma_c);
       cost += w * ComputeCostPointTexture(img_left, img_right, qx, qy, dq, options, width);
       // printf("cost=%f\n", ComputeCostPointTexture(img_left, img_right, qx, qy, dq, options, width));
       // printf("\n");
@@ -289,6 +406,76 @@ __device__ __forceinline__ float ComputePMCostRegion(
   // printf("sum cost: %f\n", cost);
   return cost;
 }
+
+// __device__ __forceinline__ float ComputePhotoConsistencyCost(
+//   cudaTextureObject_t tex_ref,
+//   cudaTextureObject_t tex_src,
+//   const int px, const int py, 
+//   const DispPlane *p,
+//   const PatchMatchOptions *options
+// ) 
+// {
+//   const int pat = options->patch_size / 2;
+//   const float ref_center_color = color(tex_ref, px, py);
+
+//   float ref_color_sum = 0.0f;
+//   float ref_color_squared_sum = 0.0f;
+//   float src_color_sum = 0.0f;
+//   float src_color_squared_sum = 0.0f;
+//   float src_ref_color_sum = 0.0f;
+//   float bilateral_weight_sum = 0.0f;
+
+//   int cnt = 0;
+//   for (int r = -pat; r <= pat; r+=1) {
+//     const int qy = py + r;
+//     for (int c = -pat; c <= pat; c+=1) {
+//       const int qx = px + c;
+
+//       float dq;
+//       PlaneToDisparity(p, qx, qy, &dq);
+
+//       const float ref_color = color(tex_ref, qx, qy);
+//       const float src_color = color(tex_src, qx - dq, qy);
+
+//       float bilateral_weight = BilateralWeight(c, r, ref_color - ref_center_color, options->sigma_s, options->sigma_c);
+
+//       const float bilateral_weight_ref = bilateral_weight * ref_color;
+//       const float bilateral_weight_src = bilateral_weight * src_color;
+//       ref_color_sum += bilateral_weight_ref;
+//       src_color_sum += bilateral_weight_src;
+//       ref_color_squared_sum += bilateral_weight_ref * ref_color;
+//       src_color_squared_sum += bilateral_weight_src * src_color;
+//       src_ref_color_sum += bilateral_weight_src * ref_color;
+//       bilateral_weight_sum += bilateral_weight;
+//     }
+//   }
+
+//   const float inv_bilateral_weight_sum = 1.0f / bilateral_weight_sum;
+//   ref_color_sum *= inv_bilateral_weight_sum;
+//   src_color_sum *= inv_bilateral_weight_sum;
+//   ref_color_squared_sum *= inv_bilateral_weight_sum;
+//   src_color_squared_sum *= inv_bilateral_weight_sum;
+//   src_ref_color_sum *= inv_bilateral_weight_sum;
+
+//   const float ref_color_var =
+//       ref_color_squared_sum - ref_color_sum * ref_color_sum;
+//   const float src_color_var =
+//       src_color_squared_sum - src_color_sum * src_color_sum;
+
+//   // Based on Jensen's Inequality for convex functions, the variance
+//   // should always be larger than 0. Do not make this threshold smaller.
+//   const float kMinVar = 1e-5f;
+//   const float kMaxCost = 2.0f;
+//   if (ref_color_var < kMinVar || src_color_var < kMinVar) {
+//     return kMaxCost;
+//   } else {
+//     const float src_ref_color_covar =
+//         src_ref_color_sum - ref_color_sum * src_color_sum;
+//     const float src_ref_color_var = sqrt(ref_color_var * src_color_var);
+//     return max(0.0f,
+//                 min(kMaxCost, fabs(1.0f - src_ref_color_covar / src_ref_color_var)));
+//   }
+// }
 
 __global__ void RandomInit(curandState *cs, unsigned long long seed, int height, int width)
 {
@@ -364,6 +551,8 @@ __global__ void GetInitialCostTexture(
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
   int center = x + y * width;
   cost[center] = ComputePMCostRegion(img_left, img_right, x, y, &plane[center], options, height, width);
+  // cost[center] = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane[center], options);
+
 }
 
 __global__ void GetInitialCostTexturePoint(
@@ -378,6 +567,7 @@ __global__ void GetInitialCostTexturePoint(
 {
   int center = x + y * width;
   cost[center] = ComputePMCostRegion(img_left, img_right, x, y, &plane[center], options, height, width);
+  // cost[center] = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane[center], options);
 }
 
 __global__ void GetInitialCost(
@@ -519,14 +709,22 @@ __device__ __forceinline__ void SpatialPropagationTexture(
   float &cost_local = cost[center_local];
 
   DispPlane &plane_nb = plane[center_nb];
+  Vector3f norm_nb;
+  PlaneToNormal(&plane_nb, &norm_nb);
+  float disp_pg;
+  PlaneToDisparity(&plane_nb, x, y, &disp_pg);
+  DispPlane plane_pg;
+  ConstructPlane(x, y, disp_pg, norm_nb.x, norm_nb.y, norm_nb.z, &plane_pg);  
+
   // printf("Current State: %f, %f, %f, Current Cost: %f\n", plane_local.a, plane_local.b, plane_local.c, cost_local);
-  float cost_nb = ComputePMCostRegion(img_left, img_right, x, y, &plane_nb, options, height, width);
+  float cost_nb = ComputePMCostRegion(img_left, img_right, x, y, &plane_pg, options, height, width);
+  // float cost_nb = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane_nb, options);
   // printf("Neighbor State: %f, %f, %f, Neighbor Cost: %f\n", plane_nb.a, plane_nb.b, plane_nb.c, cost_nb);
   if(cost_nb < cost_local) {
     cost_local = cost_nb;
-    plane_local.a = plane_nb.a;
-    plane_local.b = plane_nb.b;
-    plane_local.c = plane_nb.c;
+    plane_local.a = plane_pg.a;
+    plane_local.b = plane_pg.b;
+    plane_local.c = plane_pg.c;
     // printf("Update, New Cost: %f\n", cost_nb);
   }
   // printf("\n");
@@ -656,7 +854,7 @@ __device__ __forceinline__ void PlaneRefinementTexture(
   Vector3f norm_p;
   PlaneToDisparity(&plane_p, x, y, &d_p);
   PlaneToNormal(&plane_p, &norm_p);
-
+  float norm_pr[3] = {norm_p.x, norm_p.y, norm_p.z};
 
 	float disp_update = (max_disp - min_disp) / 2.0f;
 	float norm_update = 1.0f;
@@ -667,54 +865,71 @@ __device__ __forceinline__ void PlaneRefinementTexture(
 	while (disp_update > stop_thres) {
     // printf("Try number: %d, disp_update: %f, normal_update: %f\n", trial_num++, disp_update, norm_update);
 
-		float disp_rd = CurandBetween(&cs[center_p], -1.f, 1.f) * disp_update;
+		// float disp_rd = CurandBetween(&cs[center_p], -1.f, 1.f) * disp_update;
 
-		const float d_p_new = d_p + disp_rd;
-		if (d_p_new < min_disp || d_p_new > max_disp) {
+		// const float d_p_new = d_p + disp_rd;
+		// if (d_p_new < min_disp || d_p_new > max_disp) {
+		// 	disp_update /= 2.0f;
+    //   norm_update /= 2.0f;
+		// 	continue;
+		// }
+
+		// // �� -norm_update ~ norm_update ��Χ���������ֵ��Ϊ������������������
+		// Vector3f norm_rd;
+
+    // norm_rd.x = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
+    // norm_rd.y = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
+    // float z = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
+    // while (z == 0.0f) {
+    //   z = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
+    // }
+    // norm_rd.z = z;
+
+
+		// // ��������p�µķ���
+    // Vector3f norm_p_new;
+    // norm_p_new.x = norm_p.x + norm_rd.x;
+    // norm_p_new.y = norm_p.y + norm_rd.y;
+    // norm_p_new.z = norm_p.z + norm_rd.z;
+
+    // Normalize3f(&norm_p_new);
+
+    // Vector3f view_ray;
+    // const float& fx = params->P0[0], &fy = params->P0[5], &cx = params->P0[2], &cy = params->P0[6];
+
+    // view_ray.x = (x - cx) / fx;
+    // view_ray.y = (y - cy) / fy;
+    // view_ray.z = 1;
+
+    // float dp = norm_p_new.x * view_ray.x + norm_p_new.y * view_ray.y + norm_p_new.z * view_ray.z;
+    // if(dp > 0) {
+    //   norm_p_new.x = -norm_p_new.x;
+    //   norm_p_new.y = -norm_p_new.y;
+    //   norm_p_new.z = -norm_p_new.z;
+    // }
+
+    float cost_new = 0.0f;
+
+    float disp_rd = GenerateRandomDisp(&cs[center_p], min_disp, max_disp);
+    float norm_rd[3];
+    GenerateRandomNormal(norm_rd, &cs[center_p], x, y, params->P0);
+
+    float disp_perturbed = PerturbDisp(d_p, disp_update, &cs[center_p]);
+		if (disp_perturbed < min_disp || disp_perturbed > max_disp) {
 			disp_update /= 2.0f;
       norm_update /= 2.0f;
 			continue;
-		}
-
-		// �� -norm_update ~ norm_update ��Χ���������ֵ��Ϊ������������������
-		Vector3f norm_rd;
-
-    norm_rd.x = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
-    norm_rd.y = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
-    float z = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
-    while (z == 0.0f) {
-      z = CurandBetween(&cs[center_p], -1.f, 1.f) * norm_update;
     }
-    norm_rd.z = z;
-
-
-		// ��������p�µķ���
-    Vector3f norm_p_new;
-    norm_p_new.x = norm_p.x + norm_rd.x;
-    norm_p_new.y = norm_p.y + norm_rd.y;
-    norm_p_new.z = norm_p.z + norm_rd.z;
-
-    Normalize3f(&norm_p_new);
-
-    Vector3f view_ray;
-    const float& fx = params->P0[0], &fy = params->P0[5], &cx = params->P0[2], &cy = params->P0[6];
-
-    view_ray.x = (x - cx) / fx;
-    view_ray.y = (y - cy) / fy;
-    view_ray.z = 1;
-
-    float dp = norm_p_new.x * view_ray.x + norm_p_new.y * view_ray.y + norm_p_new.z * view_ray.z;
-    if(dp > 0) {
-      norm_p_new.x = -norm_p_new.x;
-      norm_p_new.y = -norm_p_new.y;
-      norm_p_new.z = -norm_p_new.z;
-    }
-
+    float norm_perturbed[3];
+    PerturbNormal(norm_pr, norm_update, &cs[center_p], norm_perturbed, x, y, params->P0);
+    
     DispPlane plane_new;
-    ConstructPlane(x, y, d_p_new, norm_p_new.x, norm_p_new.y, norm_p_new.z, &plane_new);
-    // printf("Current State: %f, %f, %f, Current Cost: %f\n", plane_p.a, plane_p.b, plane_p.c, cost_p);
-    float cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
-    // printf("New State: %f, %f, %f, New Cost: %f\n", plane_new.a, plane_new.b, plane_new.c, cost_new);
+
+    // pd + pn
+    ConstructPlane(x, y, disp_perturbed, norm_perturbed[0], norm_perturbed[1], norm_perturbed[2], &plane_new);
+    cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
+    // float cost_new = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane_new, options);
+
     if(cost_new < cost_p) {
       cost_p = cost_new;
       plane_p.a = plane_new.a;
@@ -722,6 +937,67 @@ __device__ __forceinline__ void PlaneRefinementTexture(
       plane_p.c = plane_new.c;
       // printf("Update, New Cost: %f\n", cost_new);
     }
+
+    // pd + on
+    ConstructPlane(x, y, disp_perturbed, norm_pr[0], norm_pr[1], norm_pr[2], &plane_new);
+    cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
+    // float cost_new = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane_new, options);
+    if(cost_new < cost_p) {
+      cost_p = cost_new;
+      plane_p.a = plane_new.a;
+      plane_p.b = plane_new.b;
+      plane_p.c = plane_new.c;
+      // printf("Update, New Cost: %f\n", cost_new);
+    }
+
+    // od + pn
+    ConstructPlane(x, y, d_p, norm_perturbed[0], norm_perturbed[1], norm_perturbed[2], &plane_new);
+    cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
+    // float cost_new = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane_new, options);
+    if(cost_new < cost_p) {
+      cost_p = cost_new;
+      plane_p.a = plane_new.a;
+      plane_p.b = plane_new.b;
+      plane_p.c = plane_new.c;
+      // printf("Update, New Cost: %f\n", cost_new);
+    }
+
+    // // rd + on
+    // ConstructPlane(x, y, disp_rd, norm_pr[0], norm_pr[1], norm_pr[2], &plane_new);
+    // cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
+    // // float cost_new = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane_new, options);
+    // if(cost_new < cost_p) {
+    //   cost_p = cost_new;
+    //   plane_p.a = plane_new.a;
+    //   plane_p.b = plane_new.b;
+    //   plane_p.c = plane_new.c;
+    //   // printf("Update, New Cost: %f\n", cost_new);
+    // }
+
+    // // od + rn
+    // ConstructPlane(x, y, d_p, norm_rd[0], norm_rd[1], norm_rd[2], &plane_new);
+    // cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
+    // // float cost_new = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane_new, options);
+    // if(cost_new < cost_p) {
+    //   cost_p = cost_new;
+    //   plane_p.a = plane_new.a;
+    //   plane_p.b = plane_new.b;
+    //   plane_p.c = plane_new.c;
+    //   // printf("Update, New Cost: %f\n", cost_new);
+    // }
+
+    // // rd + rn
+    // ConstructPlane(x, y, disp_rd, norm_rd[0], norm_rd[1], norm_rd[2], &plane_new);
+    // cost_new = ComputePMCostRegion(img_left, img_right, x, y, &plane_new, options, height, width);
+    // // float cost_new = ComputePhotoConsistencyCost(img_left, img_right, x, y, &plane_new, options);
+    // if(cost_new < cost_p) {
+    //   cost_p = cost_new;
+    //   plane_p.a = plane_new.a;
+    //   plane_p.b = plane_new.b;
+    //   plane_p.c = plane_new.c;
+    //   // printf("Update, New Cost: %f\n", cost_new);
+    // }
+
 		disp_update /= 2.0f;
 		norm_update /= 2.0f;
 	}
@@ -913,8 +1189,9 @@ __global__ void PropagateRedTexture(
   else y = y * 2;
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
 
-  PropagateCloseTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
-  PropagateFarTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+  // PropagateCloseTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+  // PropagateFarTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+  PropagateTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
 }
 
 __global__ void PropagateRed(
@@ -962,8 +1239,9 @@ __global__ void PropagateBlackTexture(
   else y = y * 2 + 1;
 
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
-  PropagateCloseTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
-  PropagateFarTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+  // PropagateCloseTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+  // PropagateFarTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
+  PropagateTexture(img_left, img_right, plane, cost, cs, x, y, options, params, height, width);
 }
 
 __global__ void PropagateBlack(
@@ -1417,43 +1695,6 @@ bool StereoMatcherCuda::Match(const uint8_t* color_left, const uint8_t* color_ri
     ShowDisparityAndNormalMap(plane_left_, height_, width_);
   }
 
-  // {
-  //   dim3 block_size_iter(1, height_);
-  //   dim3 grid_size_iter(1, 1);
-  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 0);
-  //   cudaDeviceSynchronize();
-  //   printf("Complete l2r!\n");
-  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
-  // }
-
-  // {
-  //   dim3 block_size_iter(width_, 1);
-  //   dim3 grid_size_iter(1, 1);
-  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 1);
-  //   cudaDeviceSynchronize();
-  //   printf("Complete u2b!\n");
-  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
-  // }
-
-  // {
-  //   dim3 block_size_iter(1, height_);
-  //   dim3 grid_size_iter(1, 1);
-  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 2);
-  //   cudaDeviceSynchronize();
-  //   printf("Complete r2l!\n");
-  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
-  // }
-
-  // {
-  //   dim3 block_size_iter(width_, 1);
-  //   dim3 grid_size_iter(1, 1);
-  //   PropagateForward <<<grid_size_iter, block_size_iter>>>(tex_left_, tex_right_, plane_left_, cost_left_, cs_left_, options_, params_, height_, width_, 3);
-  //   cudaDeviceSynchronize();
-  //   printf("Complete b2u!\n");
-  //   ShowDisparityAndNormalMap(plane_left_, height_, width_);
-  // }
-
-
   ShowDisparityAndNormalMap(plane_left_, height_, width_);
   cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess)
@@ -1466,7 +1707,7 @@ bool StereoMatcherCuda::Match(const uint8_t* color_left, const uint8_t* color_ri
   // ConvertPlaneToDepthAndNormal(ref_->plane_, depth, normal, height, width);
   for(int i = 0; i < height_; ++i) {
     for(int j = 0; j < width_; ++j) {
-      depth_img.at<float>(i,j) = params_->bf / plane_left_[i*width_+j].a * j + plane_left_[i*width_+j].b * i + plane_left_[i*width_+j].c;
+      depth_img.at<float>(i,j) = params_->bf / (plane_left_[i*width_+j].a * j + plane_left_[i*width_+j].b * i + plane_left_[i*width_+j].c);
       Vector3f norm_ij = plane_left_[i*width_+j].to_normal();
       normal_img.at<cv::Vec3f>(i,j) = cv::Vec3f(norm_ij.x, norm_ij.y, norm_ij.z);
     }
@@ -1474,4 +1715,3 @@ bool StereoMatcherCuda::Match(const uint8_t* color_left, const uint8_t* color_ri
 
   return true;
 }
-

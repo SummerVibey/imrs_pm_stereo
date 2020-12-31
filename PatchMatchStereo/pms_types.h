@@ -16,8 +16,8 @@ using namespace std;
 using std::vector;
 using std::pair;
 
-#ifndef SAFE_DELETE
-#define SAFE_DELETE(P) {if(P) delete[](P);(P)=nullptr;}
+#ifndef SafeDelete
+#define SafeDelete(P) {if(P) delete[](P);(P)=nullptr;}
 #endif
 
 /** \brief �������ͱ��� */

@@ -347,7 +347,7 @@ int main(int argc, char** argv)
   //   }
   // }
 
-  mvs_matcher->InitializeKRT(0);
+  mvs_matcher->Initialize();
   // mvs_matcher->Run();
 
   delete mvs_matcher;

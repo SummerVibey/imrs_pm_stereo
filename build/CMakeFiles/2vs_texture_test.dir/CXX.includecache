@@ -277,11 +277,23 @@ data_io.h
 /home/yons/imrs_pm_stereo/PatchMatchStereo/data_io.h
 data_types.h
 /home/yons/imrs_pm_stereo/PatchMatchStereo/data_types.h
+helper_cuda.h
+/home/yons/imrs_pm_stereo/PatchMatchStereo/helper_cuda.h
 
 /home/yons/imrs_pm_stereo/PatchMatchStereo/mvs_matcher_wrapper.h
 vector
 -
 opencv2/core/core.hpp
+-
+opencv2/highgui/highgui.hpp
+-
+pcl-1.8/pcl/io/pcd_io.h
+-
+pcl-1.8/pcl/point_types.h
+-
+pcl-1.8/pcl/point_cloud.h
+-
+pcl-1.8/pcl/visualization/cloud_viewer.h
 -
 data_io.h
 /home/yons/imrs_pm_stereo/PatchMatchStereo/data_io.h

@@ -72,14 +72,14 @@ bool PatchMatchStereo::Initialize(const sint32 & width, const sint32 & height, c
 
 void PatchMatchStereo::Release()
 {
-	SAFE_DELETE(grad_left_);
-	SAFE_DELETE(grad_right_);
-	SAFE_DELETE(cost_left_);
-	SAFE_DELETE(cost_right_);
-	SAFE_DELETE(disp_left_);
-	SAFE_DELETE(disp_right_);
-	SAFE_DELETE(plane_left_);
-	SAFE_DELETE(plane_right_);
+	SafeDelete(grad_left_);
+	SafeDelete(grad_right_);
+	SafeDelete(cost_left_);
+	SafeDelete(cost_right_);
+	SafeDelete(disp_left_);
+	SafeDelete(disp_right_);
+	SafeDelete(plane_left_);
+	SafeDelete(plane_right_);
 }
 
 bool PatchMatchStereo::Match(const uint8* img_left, const uint8* img_right, float32* disp_left)

@@ -309,7 +309,7 @@ __global__ void RandomInit(curandState *cs, unsigned long long seed, int height,
   curand_init(seed, y, x, &cs[center]);
 }
 
-__global__ void RandomPlane(
+__global__ void GenerateRandomState(
   PlaneState *plane, 
   curandState *cs, 
   const PatchMatchOptions *options,
@@ -351,9 +351,9 @@ __device__ __forceinline__ float ComputePMCost(
   int height, int width
 )
 {
-  // if (sx < 0.0f || sx >= static_cast<float>(width) || sy < 0.0f || sy >= static_cast<float>(height)) {
-  //   return (1 - options->alpha) * options->tau_col + options->alpha * options->tau_grad;
-  // }
+  if (sx < 0.0f || sx >= static_cast<float>(width) || sy < 0.0f || sy >= static_cast<float>(height)) {
+    return (1 - options->alpha) * options->tau_col + options->alpha * options->tau_grad;
+  }
   const float col_p = color(tex_ref, rx, ry);
   const float col_q = color(tex_src, sx, sy);
   const float dc = fminf(fabs(col_p - col_q), options->tau_col);
@@ -406,31 +406,11 @@ __device__ __forceinline__ float ComputePMCostRegion(
       float qsx, qsy;
       TransformView(Hsr, qx, qy, qsx, qsy);
       // Warp(view_ref->params_->K_, view_src->params_->K_, R21, t21, qx, qy, idq / 180.0f, qsx, qsy);
-
-      // printf("homography matrix:\n");
-      // for(int i = 0; i < 3; ++i) {
-      //   for(int j = 0; j < 3; ++j) {
-      //     printf("%f   ", Hsr[i*3+j]);
-      //   }
-      //   printf("\n");
-      // }
-      // printf("normal: %f, %f, %f\n", nx, ny, nz);
-      // printf("normal norm: %f\n", nx*nx+ny*ny+nz*nz);
-      // printf("current point %f, %f\n", (float)qx, (float)qy);
-      // printf("stereo point %f, %f\n", (float)qx - idq * 180.0f, (float)qy);
-      // printf("  warp point %f, %f\n", qsxs, qsys);
-      // // printf(" homog point %f, %f\n", qsxs, qsys);
-      // printf("   disparity %f\n\n", idq * 180.0f);
-      // float cost1 = weight * ComputePMCost(view_ref->tex_, view_src->tex_, qx, qy, qsx, qsy, options, height, width);
-      // float cost2 = weight * ComputePMCost(view_ref->tex_, view_src->tex_, qx, qy, qx - idq, qy, options, height, width);
-      // printf("cost %f, %f\n", cost1, cost2);
       cost += weight * ComputePMCost(view_ref->tex_, view_src->tex_, qx, qy, qsx, qsy, options, height, width);
-      // cost += weight * ComputePMCost(view_ref->tex_, view_src->tex_, qx, qy, qx - idq, qy, options, height, width);
-      // printf("\n");
+
     }
   }
-  // }
-  // printf("end\n");
+
   return cost;
 }
 
@@ -448,132 +428,123 @@ __device__ __forceinline__ float ComputePMCostRegion(
 __device__ __forceinline__ float ComputePhotoConsistencyCost(
   cudaTextureObject_t tex_ref,
   cudaTextureObject_t tex_src,
-  const float *K_ref,
-  const float *K_src,
-  const float *R_ref,
-  const float *R_src,
-  const float *t_ref,
-  const float *t_src,
   const int pcx, const int pcy, 
-  const float depth, const float normal[3],
+  const float Hsr[9],
+  const float idp, 
+  const float nx, const float ny, const float nz,
   const PatchMatchOptions *options
 ) 
 {
-  const int pat = options->patch_size / 2;
-
-  float Hsr[9];
-  ComputeHomography(K_ref, K_src, R_ref, R_src, t_ref, t_src, pcx, pcy, 1/depth, normal, Hsr);
-
+  const int window_radius = options->patch_size / 2;
   const float ref_center_color = color(tex_ref, pcx, pcy);
-  float qcx, qcy;
-  TransformView(Hsr, pcx, pcy, qcx, qcy);
-  const float src_center_color = color(tex_src, qcx, qcy);
 
-  int area_size = options->patch_size * options->patch_size;
-  float *ref_color, *src_color, *ref_weight, *src_weight;
-  ref_color = new float[area_size];
-  src_color = new float[area_size];
-  ref_weight = new float[area_size];
-  src_weight = new float[area_size];
-
-  float ref_weight_sum = 0.0f;
-  float src_weight_sum = 0.0f;
-  float ref_weight_color_sum = 0.0f;
-  float src_weight_color_sum = 0.0f;
+  float ref_color_sum = 0.0f;
+  float ref_color_squared_sum = 0.0f;
+  float src_color_sum = 0.0f;
+  float src_color_squared_sum = 0.0f;
+  float src_ref_color_sum = 0.0f;
+  float bilateral_weight_sum = 0.0f;
 
   int cnt = 0;
-  for (int r = -pat; r <= pat; r+=1) {
-    const int py = pcy + r;
-    for (int c = -pat; c <= pat; c+=1) {
-      const int px = pcx + c;
-      // printf("process: %d, %d\n", r, c);
-      float qx, qy;
+  for (int y_bias = -window_radius; y_bias <= window_radius; y_bias+=1) {
+    for (int x_bias = -window_radius; x_bias <= window_radius; x_bias+=1) {
+
+      float px, py, qx, qy;
+      px = pcx + x_bias;
+      py = pcy + y_bias;
       TransformView(Hsr, px, py, qx, qy);
-      // printf("px, py, qx, qy: %d, %d, %f, %f\n", px, py, qx, qy);
 
-      float ref_color_i = color(tex_ref, px, py);
-      float src_color_i = color(tex_src, qx, qy);
-      ref_color[cnt] = ref_color_i;
-      src_color[cnt] = src_color_i;
-      // printf("ref_color_i, src_color_i: %f, %f\n", ref_color_i, src_color_i);
-      // printf("sigma_s, sigma_c: %f, %f\n", options->sigma_s, options->sigma_c);
-      const float ref_x_diff = abs(px - pcx);
-      const float ref_y_diff = abs(py - pcy);
-      const float ref_color_diff = abs(ref_color_i - ref_center_color);
-      float ref_weight_i = BilateralWeight(ref_x_diff, ref_y_diff, ref_color_diff, options->sigma_s, options->sigma_c);
-      // float ref_weight_i = expf( -(abs(px - pcx)+abs(py - pcy))/options->sigma_s - abs(ref_color_i - ref_center_color)/options->sigma_c  );
-      const float src_x_diff = abs(qx - qcx);
-      const float src_y_diff = abs(qy - qcy);
-      const float src_color_diff = fabs(src_color_i - src_center_color);
-      // printf("x_diff, y_diff, color_diff: %f, %f, %f\n", ref_x_diff, ref_y_diff, ref_color_diff);
-      float src_weight_i = BilateralWeight(src_x_diff, src_y_diff, src_color_diff, options->sigma_s, options->sigma_c);
-      // float src_weight_i = expf( -(abs(qx - qcx)+abs(qy - qcy))/options->sigma_s - abs(src_color_i - src_center_color)/options->sigma_c  );
-      // printf("x_diff, y_diff, color_diff: %f, %f, %f\n", src_x_diff, src_y_diff, src_color_diff);
-      ref_weight[cnt] = ref_weight_i;
-      src_weight[cnt] = src_weight_i;
+      const float ref_color = color(tex_ref, px, py);
+      const float src_color = color(tex_src, qx, qy);
 
-      // printf("ref_weight_i, src_weight_i: %f, %f\n", ref_weight_i, src_weight_i);
+      float bilateral_weight = BilateralWeight(x_bias, y_bias, ref_color - ref_center_color, options->sigma_s, options->sigma_c);
 
-      ref_weight_sum += ref_weight_i;
-      src_weight_sum += src_weight_i;
-
-      ref_weight_color_sum += ref_weight_i * ref_color_i;
-      src_weight_color_sum += src_weight_i * src_color_i;
-      
-      cnt++;
-      // printf("cnt: %d\n", cnt);
+      const float bilateral_weight_ref = bilateral_weight * ref_color;
+      const float bilateral_weight_src = bilateral_weight * src_color;
+      ref_color_sum += bilateral_weight_ref;
+      src_color_sum += bilateral_weight_src;
+      ref_color_squared_sum += bilateral_weight_ref * ref_color;
+      src_color_squared_sum += bilateral_weight_src * src_color;
+      src_ref_color_sum += bilateral_weight_src * ref_color;
+      bilateral_weight_sum += bilateral_weight;
     }
   }
 
-  const float ref_mean = ref_weight_color_sum / ref_weight_sum;
-  const float src_mean = src_weight_color_sum / src_weight_sum;
+  const float inv_bilateral_weight_sum = 1.0f / bilateral_weight_sum;
+  ref_color_sum *= inv_bilateral_weight_sum;
+  src_color_sum *= inv_bilateral_weight_sum;
+  ref_color_squared_sum *= inv_bilateral_weight_sum;
+  src_color_squared_sum *= inv_bilateral_weight_sum;
+  src_ref_color_sum *= inv_bilateral_weight_sum;
 
-  float xy = 0, x2 = 0, y2 = 0;
-  for(int i = 0; i < area_size; ++i) {
-    xy += ref_weight[i] * src_weight[i] * (ref_color[i] - ref_mean) * (src_color[i] - src_mean);
-    x2 += ref_weight[i] * ref_weight[i] * (ref_color[i] - ref_mean) * (ref_color[i] - ref_mean);
-    y2 += src_weight[i] * src_weight[i] * (src_color[i] - src_mean) * (src_color[i] - src_mean);
+  const float ref_color_var =
+      ref_color_squared_sum - ref_color_sum * ref_color_sum;
+  const float src_color_var =
+      src_color_squared_sum - src_color_sum * src_color_sum;
+
+  // Based on Jensen's Inequality for convex functions, the variance
+  // should always be larger than 0. Do not make this threshold smaller.
+  const float kMinVar = 1e-5f;
+  const float kMaxCost = 2.0f;
+  if (ref_color_var < kMinVar || src_color_var < kMinVar) {
+    return kMaxCost;
+  } else {
+    const float src_ref_color_covar =
+        src_ref_color_sum - ref_color_sum * src_color_sum;
+    const float src_ref_color_var = sqrt(ref_color_var * src_color_var);
+    return max(0.0f,
+                min(kMaxCost, 1.0f - src_ref_color_covar / src_ref_color_var));
   }
-
-  delete ref_color;
-  delete src_color;
-  delete ref_weight;
-  delete src_weight;
-
-  // printf("x, y, ncc: %d, %d, %f\n", pcx, pcy, xy / sqrt(x2 * y2 + 1e-5));
-  return 1.0f - xy / sqrt(x2 * y2 + 1e-5);
 }
 
-__global__ void ComputeNCCTest(
-  cudaTextureObject_t tex_ref,
-  cudaTextureObject_t tex_src,
-  const float *K_ref,
-  const float *K_src,
-  const float *R_ref,
-  const float *R_src,
-  const float *t_ref,
-  const float *t_src,
-  const int pcx, const int pcy, 
-  const float depth, const float normal[3], 
+__device__ __forceinline__ float ComputeGeometryConsistencyCost(
+  RefViewSpace *view_ref,
+  ViewSpace *view_src,
+  const int px, const int py, 
+  const float Hsr[9],
+  const float idp, 
+  const float nx, const float ny, const float nz,
   const PatchMatchOptions *options
-)
+) 
 {
-  printf("here\n");
-  float cost = ComputePhotoConsistencyCost(
-    tex_ref,
-    tex_src,
-    K_ref,
-    K_src,
-    R_ref,
-    R_src,
-    t_ref,
-    t_src,
-    pcx, pcy, 
-    depth, normal, 
-    options
-  );
-  printf("here\n");
-  printf("cost: %f\n", cost);
+  const float max_cost = 5.0f;
+  // Extract projection matrices for source image.
+  const float *K_ref = view_ref->params_->K_;
+  const float *K_src = view_src->params_->K_;
+
+  const float &ref_fx = K_ref[0], &ref_fy = K_ref[4],
+              &ref_cx = K_ref[2], &ref_cy = K_ref[5];
+
+  const float &src_fx = K_src[0], &src_fy = K_src[4],
+              &src_cx = K_src[2], &src_cy = K_src[5];
+
+  const float ref_inv_fx = 1 / ref_fx, ref_inv_cx = -ref_cx / ref_fx,
+              ref_inv_fy = 1 / ref_fy, ref_inv_cy = -ref_cy / ref_fy;
+
+  const float src_inv_fx = 1 / src_fx, src_inv_cx = -src_cx / src_fx,
+              src_inv_fy = 1 / src_fy, src_inv_cy = -src_cy / src_fy;
+  
+  const float dp = 1 / idp;
+  const float forward_point[3] = {dp * (ref_inv_fx * px + ref_inv_cx), dp * (ref_inv_fy * py + ref_inv_cy), dp};
+
+  float R21[9], t21[3];
+  float qx, qy, idq;
+  ComputeRelativePose(view_ref->params_->R_, view_ref->params_->t_, view_src->params_->R_, view_src->params_->t_, R21, t21);
+  Warp(view_ref->params_->K_, view_src->params_->K_, R21, t21, px, py, idp, qx, qy, idq);
+
+  const float dq = 1 / idq;
+  const float backward_point[3] = {dq * (src_inv_fx * qx + src_inv_cx), dq * (src_inv_fy * qy + src_inv_cy), dq};
+
+  float R12[9], t12[3];
+  float rx, ry, idr;
+  ComputeRelativePose(view_src->params_->R_, view_src->params_->t_, view_ref->params_->R_, view_ref->params_->t_, R12, t12);
+  Warp(view_src->params_->K_, view_ref->params_->K_, R12, t12, qx, qy, idq, rx, ry, idr);
+
+  // Return truncated reprojection error between original observation and
+  // the forward-backward projected observation.
+  const float diff_x = px - rx;
+  const float diff_y = py - ry;
+  return min(max_cost, sqrt(diff_x * diff_x + diff_y * diff_y));
 }
 
 __device__ __forceinline__ void PropagateSpatial(
@@ -600,22 +571,112 @@ __device__ __forceinline__ void PropagateSpatial(
   float &cost_local = cost[center_local];
 
   PlaneState &plane_nb = plane[center_nb];
+  const float& nx = plane_nb.nx_;
+  const float& ny = plane_nb.ny_;
+  const float& nz = plane_nb.nz_;
+  const float& d1 = 1 / plane_nb.idp_;
   // printf("Current State: %f, %f, %f, Current Cost: %f\n", plane_local.a, plane_local.b, plane_local.c, cost_local);
+  float Hsr[9];
+  float normal[3] = {plane_nb.nx_, plane_nb.ny_, plane_nb.nz_};
+  float plane_a = -plane_nb.nx_/plane_nb.nz_;
+  float plane_b = -plane_nb.ny_/plane_nb.nz_;
+  float plane_c = (plane_nb.nx_ * x_nb + plane_nb.ny_ * y_nb + plane_nb.nz_ * plane_nb.idp_) / plane_nb.nz_;
+  // float idp = plane_a * x_nb + plane_b * y_nb + plane_c;
+  float idp = plane_nb.idp_;
+  // float idp = 1 / ((nx * x + ny * y + nz) * d1 / (nx * x_nb + ny * x_nb + nz));
+  ComputeHomography(
+    view_ref->params_->K_, 
+    view_src->params_->K_, 
+    view_ref->params_->R_,
+    view_src->params_->R_,
+    view_ref->params_->t_,
+    view_src->params_->t_,
+    x, y, idp, normal, Hsr);
+
+  // float cost_nb = ComputePhotoConsistencyCost(
+  //   view_ref->tex_, view_src->tex_, x, y, Hsr, idp, normal[0], normal[1], normal[2], options);
   float cost_nb = ComputePMCostRegion(view_ref, view_src, x, y, plane_nb.idp_, plane_nb.nx_, plane_nb.ny_, plane_nb.nz_, options, height, width);
 
   // printf("Neighbor State: %f, %f, %f, Neighbor Cost: %f\n", plane_nb.a, plane_nb.b, plane_nb.c, cost_nb);
   if(cost_nb < cost_local) {
     cost_local = cost_nb;
-    plane_local.idp_ = plane_nb.idp_;
-    plane_local.nx_ = plane_nb.nx_;
-    plane_local.ny_ = plane_nb.ny_;
-    plane_local.nz_ = plane_nb.nz_;
+    plane_local.idp_ = idp;
+    plane_local.nx_ = normal[0];
+    plane_local.ny_ = normal[1];
+    plane_local.nz_ = normal[2];
     // printf("Update, New Cost: %f\n", cost_nb);
   }
   // printf("\n");
 }
 
 __device__ __forceinline__ void RefinePlane(
+  RefViewSpace *view_ref,
+  ViewSpace *view_src,
+  PlaneState *plane, 
+  PlaneState *plane_buf,
+  float *cost, 
+  int x, int y,
+  const PatchMatchOptions *options,
+  int buf_size,
+  int height, 
+  int width
+)
+{
+  const float max_disp = static_cast<float>(options->max_disparity);
+	const float min_disp = static_cast<float>(options->min_disparity);
+
+  // ����p��ƽ�桢���ۡ��Ӳ����
+  int center_local = y * width + x;
+	PlaneState& plane_local = plane[center_local];
+  float& cost_local = cost[center_local];
+  
+	float disp_update = (max_disp - min_disp) / 2.0f;
+	float norm_update = 1.0f;
+  const float stop_thres = 0.01f;
+  
+  for(int idx = 0; idx < buf_size; ++idx) {
+    PlaneState& plane_new = plane_buf[idx];
+    float idp_new = plane_new.idp_;
+    float norm_new[3];
+    norm_new[0] = plane_new.nx_;
+    norm_new[1] = plane_new.ny_;
+    norm_new[2] = plane_new.nz_;
+
+    // float Hsr[9];
+    // ComputeHomography(
+    //   view_ref->params_->K_, 
+    //   view_src->params_->K_, 
+    //   view_ref->params_->R_,
+    //   view_src->params_->R_,
+    //   view_ref->params_->t_,
+    //   view_src->params_->t_,
+    //   x, y, idp_new, norm_new, Hsr);
+
+    // float cost_new = ComputePhotoConsistencyCost(
+    //     view_ref->tex_, view_src->tex_, x, y, Hsr, idp_new, norm_new[0], norm_new[1], norm_new[2], options);
+    // printf("New State: %f, %f, %f, New Cost: %f\n", plane_new->a, plane_new->b, plane_new->c, cost_new);
+    float cost_new = ComputePMCostRegion(view_ref, view_src, x, y, idp_new, norm_new[0], norm_new[1], norm_new[2], options, height, width);
+    if(cost_new < cost_local) {
+      cost_local = cost_new;
+      plane_local.idp_ = idp_new;
+      plane_local.nx_ = norm_new[0];
+      plane_local.ny_ = norm_new[1];
+      plane_local.nz_ = norm_new[2];
+      // printf("Update, New Cost: %f\n", cost_new);
+    }
+  }
+}
+
+__device__ __forceinline__ void GeneratePlaneSet(
+  curandState *cs,
+  PlaneState *plane_new,
+  int buf_size
+)
+{
+
+}
+
+__device__ __forceinline__ void RefinePlaneBase(
   RefViewSpace *view_ref,
   ViewSpace *view_src,
   PlaneState *plane, 
@@ -687,6 +748,20 @@ __device__ __forceinline__ void RefinePlane(
     // DispPlane plane_new;
     // ConstructPlane(x, y, d_p_new, norm_p_new.x, norm_p_new.y, norm_p_new.z, &plane_new);
     // printf("Current State: %f, %f, %f, Current Cost: %f\n", plane_p.a, plane_p.b, plane_p.c, cost_p);
+
+    float Hsr[9];
+    float normal[3] = {norm_new.x, norm_new.y, norm_new.z};
+    ComputeHomography(
+      view_ref->params_->K_, 
+      view_src->params_->K_, 
+      view_ref->params_->R_,
+      view_src->params_->R_,
+      view_ref->params_->t_,
+      view_src->params_->t_,
+      x, y, idp_new, normal, Hsr);
+
+    // float cost_new = ComputePhotoConsistencyCost(
+      // view_ref->tex_, view_src->tex_, x, y, Hsr, idp_new, norm_new.x, norm_new.y, norm_new.z, options);
     float cost_new = ComputePMCostRegion(view_ref, view_src, x, y, idp_new, norm_new.x, norm_new.y, norm_new.z, options, height, width);
     // printf("New State: %f, %f, %f, New Cost: %f\n", plane_new->a, plane_new->b, plane_new->c, cost_new);
     if(cost_new < cost_local) {
@@ -714,18 +789,19 @@ __device__ __forceinline__ void Propagate(
   int width
 )
 {
-  // const int x_bias[8] = {-1,0,1,0,-5,0,5,0};
-  // const int y_bias[8] = {0,1,0,-1,0,5,0,-5};
+  const int x_bias[8] = {-1,0,1,0,-5,0,5,0};
+  const int y_bias[8] = {0,1,0,-1,0,5,0,-5};
 
-  const int x_bias[20] = {-1,0,1,0,-3,-2,-1,0,1,2,3,2,1,0,-1,-2,-5,0,5,0};
-  const int y_bias[20] = {0,1,0,-1,0,1,2,3,2,1,0,-1,-2,-3,-2,-1,0,5,0,-5};
+  // const int x_bias[20] = {-1,0,1,0,-3,-2,-1,0,1,2,3,2,1,0,-1,-2,-5,0,5,0};
+  // const int y_bias[20] = {0,1,0,-1,0,1,2,3,2,1,0,-1,-2,-3,-2,-1,0,5,0,-5};
+  
 
-  for(int i = 0; i < 20; ++i) {
+  for(int i = 0; i < 8; ++i) {
     PropagateSpatial(view_ref, view_src, plane, cost, x, y, x_bias[i], y_bias[i], options, height, width);
     __syncthreads();
   }
 
-  RefinePlane(view_ref, view_src, plane, cost, cs, x, y, options, height, width);
+  RefinePlaneBase(view_ref, view_src, plane, cost, cs, x, y, options, height, width);
   __syncthreads();
 }
 
@@ -771,20 +847,43 @@ __global__ void PropagateRed(
 
 __global__ void CostInit(
   RefViewSpace *view_ref, 
-  ViewSpace *view_src[],
+  ViewSpace *view_src,
   const int src_size,
   const PatchMatchOptions *options,
   const int height, 
   const int width
 )
 {
+  // // using patch match cost
+  // int x = threadIdx.x + blockIdx.x * blockDim.x; 
+  // int y = threadIdx.y + blockIdx.y * blockDim.y; 
+
+  // if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
+  // int center = x + y * width;
+  // const PlaneState& plane_local = view_ref->plane_[center];
+  // view_ref->cost_[center] = ComputePMCostRegion(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
+
+  // using ncc cost
   int x = threadIdx.x + blockIdx.x * blockDim.x; 
   int y = threadIdx.y + blockIdx.y * blockDim.y; 
 
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
   int center = x + y * width;
   const PlaneState& plane_local = view_ref->plane_[center];
-  view_ref->cost_[center] = ComputePMCostRegion(view_ref, view_src[0], x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
+  view_ref->cost_[center] = ComputePMCostRegion(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
+  // float Hsr[9];
+  // float normal[3] = {plane_local.nx_, plane_local.ny_, plane_local.nz_};
+  // ComputeHomography(
+  //   view_ref->params_->K_, 
+  //   view_src->params_->K_, 
+  //   view_ref->params_->R_,
+  //   view_src->params_->R_,
+  //   view_ref->params_->t_,
+  //   view_src->params_->t_,
+  //   x, y, plane_local.idp_, normal, Hsr);
+
+  // view_ref->cost_[center] = ComputePhotoConsistencyCost(
+  //   view_ref->tex_, view_src->tex_, x, y, Hsr, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options);
 }
 
 __global__ void CostInitInOrder(
@@ -800,9 +899,41 @@ __global__ void CostInitInOrder(
     for(int x = 0; x < width; ++x) {
       int center = x + y * width;
       const PlaneState& plane_local = view_ref->plane_[center];
+      printf("x, y: %d, %d\n", x, y);
       view_ref->cost_[center] = ComputePMCostRegion(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
     }
   }
+}
+
+__global__ void ComputePhotoConsistencyCostTest(
+  RefViewSpace *view_ref, 
+  ViewSpace *view_src,
+  const int src_size,
+  const PatchMatchOptions *options,
+  float *cost_ncc,
+  const int height, 
+  const int width
+)
+{
+  int x = threadIdx.x + blockIdx.x * blockDim.x; 
+  int y = threadIdx.y + blockIdx.y * blockDim.y; 
+
+  if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
+  int center = x + y * width;
+  const PlaneState& plane_local = view_ref->plane_[center];
+  float Hsr[9];
+  float normal[3] = {plane_local.nx_, plane_local.ny_, plane_local.nz_};
+  ComputeHomography(
+    view_ref->params_->K_, 
+    view_src->params_->K_, 
+    view_ref->params_->R_,
+    view_src->params_->R_,
+    view_ref->params_->t_,
+    view_src->params_->t_,
+    x, y, plane_local.idp_, normal, Hsr);
+
+  cost_ncc[center] = ComputePhotoConsistencyCost(
+    view_ref->tex_, view_src->tex_, x, y, Hsr, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options);
 }
 
 __global__ void GetInitialPhotoCost(
@@ -869,23 +1000,29 @@ void MultiViewStereoMatcherCuda::Match(cv::Mat &depth, cv::Mat &normal)
   printf("GridSize is %dx%dx%d\n", grid_size.x, grid_size.y, grid_size.z);
   printf("BlockSize is %dx%dx%d\n", block_size.x, block_size.y, block_size.z);
   printf("ImagesSize is %dx%d\n", width, height);
+  printf("here!\n");
 
-  RandomInit <<<grid_size, block_size>>>(ref_->cs_, time(nullptr), height, width);
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  RandomInit <<<grid_size, block_size>>>(ref_->cs_, ts.tv_nsec, height, width);
   cudaDeviceSynchronize();
-  RandomPlane <<<grid_size, block_size>>>(ref_->plane_, ref_->cs_, options_, height, width, ref_->params_->K_, false);
+  GenerateRandomState <<<grid_size, block_size>>>(ref_->plane_, ref_->cs_, options_, height, width, ref_->params_->K_, false);
   // RandomPlaneInOrder <<<1, 1>>> (ref_->plane_, ref_->cs_, options_, height, width, ref_->params_->K_, false);
   cudaDeviceSynchronize();
 
-  CostInit <<<grid_size, block_size>>>(ref_, src_, image_size_, options_, height, width);
+  CostInit <<<grid_size, block_size>>>(ref_, src_[0], image_size_, options_, height, width);
   // CostInitInOrder <<<1,1>>> (ref_, src_[0], image_size_, options_, height, width);
   // GetInitialPhotoCost <<<grid_size, block_size>>> (ref_, src_, image_size_, options_, height, width);
   // GetInitialPhotoCostInOrder <<<1, 1>>> (ref_, src_[0], image_size_, options_, height, width);
   cudaDeviceSynchronize();
+
+
   ShowDepthAndNormal(ref_->plane_, height, width);
   ShowCostAndHistogram(ref_->cost_, height, width);
-  // cudaDeviceSynchronize();
 
-  for(int iter = 0; iter < 16; ++iter) {
+  cudaDeviceSynchronize();
+
+  for(int iter = 0; iter < 20; ++iter) {
     PropagateRed<<<grid_size, block_size>>>(ref_, src_[0], ref_->plane_, ref_->cost_, ref_->cs_, options_, height, width);
     cudaDeviceSynchronize();
     PropagateBlack<<<grid_size, block_size>>>(ref_, src_[0], ref_->plane_, ref_->cost_, ref_->cs_, options_, height, width);
@@ -897,6 +1034,24 @@ void MultiViewStereoMatcherCuda::Match(cv::Mat &depth, cv::Mat &normal)
   ShowDepthAndNormal(ref_->plane_, height, width);
   ShowCostAndHistogram(ref_->cost_, height, width);
   cudaDeviceSynchronize();
+
+  // // check ncc result 
+  // {
+  //   float *cost_ncc;
+  //   checkCudaErrors(cudaMallocManaged((void **)&cost_ncc, sizeof(float) * height * width));
+    
+  //   ComputePhotoConsistencyCostTest<<<grid_size, block_size>>>(ref_, src_[0], 1, options_, cost_ncc, height, width);
+  //   cudaDeviceSynchronize();
+  //   ShowCostAndHistogram(cost_ncc, height, width);
+
+  //   checkCudaErrors(cudaFree(cost_ncc));
+  // }
+
+
+
+
+
+
 
   depth = cv::Mat_<float>(height, width);
   normal = cv::Mat_<cv::Vec3f>(height, width);
@@ -940,37 +1095,37 @@ void TestHomographyWarpHost(const cv::Mat& K, const cv::Mat &R1, const cv::Mat &
   cudaDeviceSynchronize();
 }
 
-void TestComputNCCHost(
-  const cv::Mat &img0, const cv::Mat &img1, 
-  const cv::Mat& K, 
-  const cv::Mat &R1, const cv::Mat &R2, 
-  const cv::Mat &t1, const cv::Mat &t2,
-  int x, int y, float depth, float normal[3],
-  const PatchMatchOptions *options)
-{
+// void TestComputNCCHost(
+//   const cv::Mat &img0, const cv::Mat &img1, 
+//   const cv::Mat& K, 
+//   const cv::Mat &R1, const cv::Mat &R2, 
+//   const cv::Mat &t1, const cv::Mat &t2,
+//   int x, int y, float depth, float normal[3],
+//   const PatchMatchOptions *options)
+// {
 
-  float *K_, *R1_, *R2_, *t1_, *t2_, *norm;
-  cudaMalloc(&K_, sizeof(float) * 9);
-  cudaMalloc(&R1_, sizeof(float) * 9);
-  cudaMalloc(&R2_, sizeof(float) * 9);
-  cudaMalloc(&t1_, sizeof(float) * 3);
-  cudaMalloc(&t2_, sizeof(float) * 3);
-  cudaMalloc(&norm, sizeof(float) * 3);
-  cudaMemcpy(K_, (float*)K.data, sizeof(float) * 9, cudaMemcpyHostToDevice);
-  cudaMemcpy(R1_, (float*)R1.data, sizeof(float) * 9, cudaMemcpyHostToDevice);
-  cudaMemcpy(R2_, (float*)R2.data, sizeof(float) * 9, cudaMemcpyHostToDevice);
-  cudaMemcpy(t1_, (float*)t1.data, sizeof(float) * 3, cudaMemcpyHostToDevice);
-  cudaMemcpy(t2_, (float*)t2.data, sizeof(float) * 3, cudaMemcpyHostToDevice);
-  cudaMemcpy(norm, normal, sizeof(float) * 3, cudaMemcpyHostToDevice);
+//   float *K_, *R1_, *R2_, *t1_, *t2_, *norm;
+//   cudaMalloc(&K_, sizeof(float) * 9);
+//   cudaMalloc(&R1_, sizeof(float) * 9);
+//   cudaMalloc(&R2_, sizeof(float) * 9);
+//   cudaMalloc(&t1_, sizeof(float) * 3);
+//   cudaMalloc(&t2_, sizeof(float) * 3);
+//   cudaMalloc(&norm, sizeof(float) * 3);
+//   cudaMemcpy(K_, (float*)K.data, sizeof(float) * 9, cudaMemcpyHostToDevice);
+//   cudaMemcpy(R1_, (float*)R1.data, sizeof(float) * 9, cudaMemcpyHostToDevice);
+//   cudaMemcpy(R2_, (float*)R2.data, sizeof(float) * 9, cudaMemcpyHostToDevice);
+//   cudaMemcpy(t1_, (float*)t1.data, sizeof(float) * 3, cudaMemcpyHostToDevice);
+//   cudaMemcpy(t2_, (float*)t2.data, sizeof(float) * 3, cudaMemcpyHostToDevice);
+//   cudaMemcpy(norm, normal, sizeof(float) * 3, cudaMemcpyHostToDevice);
 
-  cudaTextureObject_t tex0, tex1;
-  cudaArray *arr0, *arr1;
-  CreateTextureObject(img0, tex0, arr0);
-  CreateTextureObject(img1, tex1, arr1);
-  printf("here\n");
+//   cudaTextureObject_t tex0, tex1;
+//   cudaArray *arr0, *arr1;
+//   CreateTextureObject(img0, tex0, arr0);
+//   CreateTextureObject(img1, tex1, arr1);
+//   printf("here\n");
 
-  ComputeNCCTest <<<1,1>>>(tex0, tex1, K_, K_, R1_, R2_, t1_, t2_, x, y, depth, norm, options);
-  cudaDeviceSynchronize();
-}
+//   ComputeNCCTest <<<1,1>>>(tex0, tex1, K_, K_, R1_, R2_, t1_, t2_, x, y, depth, norm, options);
+//   cudaDeviceSynchronize();
+// }
 
 // test homography and warp!!

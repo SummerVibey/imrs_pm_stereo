@@ -115,20 +115,12 @@ int main(int argc, char** argv)
   calib["P0"] >> P0;
   calib["P1"] >> P1;
   int width, height;
+  std::cout << P0 << std::endl;
+  std::cout << P1 << std::endl;
 
-  
   width = img_left.cols;
   height = img_left.rows;
 
-  float fx = 500.0f, fy = 500.0f, cx = (float)width / 2.0f, cy = (float)height / 2.0f;
-  
-  float bf;
-  // calib["width"] >> width;
-  // calib["height"] >> height;
-  calib["bf"] >> bf;
-
-  P0 = cv::Mat_<float>(3, 4) << (fx, 0, cx, 0, 0, fy, cy, 0, 0, 0, 1, 0);
-  P1 = cv::Mat_<float>(3, 4) << (fx, 0, cx, -bf, 0, fy, cy, 0, 0, 0, 1, 0);
   cv::Mat K = P0.rowRange(0,3).colRange(0,3);
   SelectCudaDevice();
 
@@ -170,9 +162,9 @@ int main(int argc, char** argv)
 	PatchMatchOptions *pms_options = new PatchMatchOptions;
 	pms_options->patch_size = 35;
 	pms_options->min_disparity = 0.0f;
-	pms_options->max_disparity = 64.0f;
-	pms_options->sigma_c = 10.0f;
-  pms_options->sigma_s = 3.0f;
+	pms_options->max_disparity = 96.0f;
+	pms_options->sigma_c = 15.0f;
+  pms_options->sigma_s = 20.0f;
 	pms_options->alpha = 0.9f;
 	pms_options->tau_col = 10.0f;
 	pms_options->tau_grad = 2.0f;

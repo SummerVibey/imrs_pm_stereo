@@ -19,6 +19,9 @@
 
 #define MAX_IMAGES_SIZE 64
 
+#define CallSafeDelete(p) {if(p){delete (p);(p)=nullptr;}}
+#define CallSafeDeleteBuffer(p,n) {for(int i=0;i<n;++i) {if(p[i]) delete (p[i]);(p[i])=nullptr;}}
+
 class PMCostComputer : public GlobalMalloc
 {
 public:
@@ -54,10 +57,11 @@ private:
 /** \brief PMS�����ṹ�� */
 struct PatchMatchOptions : public GlobalMalloc
 {
-	int	patch_size;			// patch�ߴ磬�ֲ�����Ϊ patch_size*patch_size
+	
 	float min_disparity;		// ��С�Ӳ�
 	float	max_disparity;		// ����Ӳ�
 
+  int	patch_size;			// patch�ߴ磬�ֲ�����Ϊ patch_size*patch_size
 	float	sigma_s;			//
   float sigma_c;       
 	float	alpha;				// alpha ���ƶ�ƽ������
@@ -263,6 +267,7 @@ class DispPlane : public GlobalMalloc
 {
 public:
 	float a, b, c;
+  float dp, nx, ny, nz;
 	DispPlane() = default;
 	DispPlane(const float& x,const float& y,const float& z) {
 		a = x; b = y; c = z;
@@ -504,7 +509,7 @@ public:
   ~ViewSpace()
   {
     DestroyTextureObject(tex_, arr_);
-    delete params_;
+    CallSafeDelete(params_);
   }
   
   int height_, width_;
@@ -542,7 +547,7 @@ public:
     checkCudaErrors(cudaFree(cs_));
     checkCudaErrors(cudaFree(plane_));
     checkCudaErrors(cudaFree(cost_));
-    delete params_;
+    CallSafeDelete(params_);
   }
 
   float* cost_;
@@ -553,33 +558,36 @@ public:
 class MultiViewStereoMatcherCuda : public GlobalMalloc
 {
 public:
-  MultiViewStereoMatcherCuda() : options_(nullptr) {}
+  MultiViewStereoMatcherCuda() : options_(nullptr), image_size_(0), ref_(nullptr) {}
 
-  MultiViewStereoMatcherCuda(PatchMatchOptions *options)
-  : options_(options) {}
+  MultiViewStereoMatcherCuda(PatchMatchOptions *options, int image_size)
+  : options_(options), image_size_(image_size), ref_(nullptr)
+  {
+  }
+
+  void Reset(PatchMatchOptions *options, int image_size)
+  {
+    CallSafeDelete(ref_);
+    CallSafeDeleteBuffer(src_, image_size_);
+    options_ = options;
+    image_size_ = image_size;
+  }
 
   ~MultiViewStereoMatcherCuda() {
-    delete ref_;
-    for(int i = 0; i < image_size_; ++i) {
-      delete src_[i];
-    }
-    // src_.destroy();
-    // while(!src_.empty()) {
-    //   delete src_.back();
-    //   src_.pop_back();
-    // }
+    CallSafeDelete(ref_);
+    CallSafeDeleteBuffer(src_, image_size_);
   }
 
   void Match(cv::Mat &depth, cv::Mat &normal);
 
+  PatchMatchOptions *options_;
+  int image_size_;
 
   RefViewSpace *ref_;
-  // std::vector<ViewSpace*> src_;
   ViewSpace *src_[MAX_IMAGES_SIZE];
-  int image_size_;
-  // GlobalBuffer<ViewSpace*> src_;
+  
 
-  PatchMatchOptions *options_;
+  
   
 };
 

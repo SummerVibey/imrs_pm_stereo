@@ -126,18 +126,21 @@ if (argc < 3) {
   // int src_size = 2;
 
   PatchMatchOptions *options = new PatchMatchOptions();
-  options->sigma_c = 12.0f;
-  options->sigma_s = 12.0f;
-  options->patch_size = 35;
+  options->sigma_c = 10.0f;
+  options->sigma_s = 15.0f;
+  options->patch_size = 15;
+  options->max_disparity = 0.4f;
   MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options, height, width);
   mvs_matcher->SetReferenceView(img_left, K, R1, t1);
   mvs_matcher->AddSourceView(img_right, K, R2, t2);
-  mvs_matcher->InitializeKRT(0);
+  mvs_matcher->Initialize();
   
   cv::Mat  depth_img, normal_img;
   mvs_matcher->Run(depth_img, normal_img);
 
   cv::Mat color = cv::imread(path_left, cv::IMREAD_COLOR);
+  // // cv::pyrDown(color, color, cv::Size(color.cols/2, color.rows/2));
+  // color.resize(depth_img.rows, depth_img.cols);
   ConvertDepthToCloud(color, depth_img, K, height, width);
 
   delete mvs_matcher;
@@ -398,7 +401,7 @@ if (argc < 3) {
 //   return file_list;
 // }
 
-// const int ref_idx = 0, src_idx = 8;
+// const int ref_idx = 0, src_idx = 3;
 
 // int main(int argc, char** argv)
 // {
@@ -424,15 +427,6 @@ if (argc < 3) {
 //   img_left.convertTo(img_left, CV_32F);
 //   img_right.convertTo(img_right, CV_32F);
 
-// 	// if (img_left.data == nullptr || img_right.data == nullptr) {
-// 	// 	std::cout << "��ȡӰ��ʧ�ܣ�" << std::endl;
-// 	// 	return -1;
-// 	// }
-// 	// if (img_left.rows != img_right.rows || img_left.cols != img_right.cols) {
-// 	// 	std::cout << "����Ӱ��ߴ粻һ�£�" << std::endl;
-// 	// 	return -1;
-// 	// }
-
 //   cv::FileStorage calib(calib_file, cv::FileStorage::READ);
 //   cv::Mat K = cv::Mat_<float>(3, 3);
 //   calib["camera_matrix"] >> K;
@@ -443,214 +437,24 @@ if (argc < 3) {
 //   assert(img_filenames.size() == Rs.size() && img_filenames.size() == ts.size());
 //   SelectCudaDevice();
 
-//   // cv::Mat K = camera_matrix.clone();
-//   // cv::Mat R0 = cv::Mat::eye(3, 3, CV_32F), R1 = cv::Mat::eye(3, 3, CV_32F);
-//   // cv::Mat t0 = cv::Mat::zeros(3, 1, CV_32F), t1 = cv::Mat::zeros(3, 1, CV_32F);
-//   // t1.at<float>(0) = -bf / K.at<float>(0,0);
-
-//   // std::cout << K << std::endl;
-//   // std::cout << R0 << std::endl;
-//   // std::cout << t0 << std::endl;
-//   // std::cout << R1 << std::endl;
-//   // std::cout << t1 << std::endl;
-
-//   // // test homography
-//   // // Eigen::Vector3f norm_center(0.1, 0.2, -0.8); norm_center.normalize();
-//   // Eigen::Vector3f norm_center(-0.07, -0.07, -0.8); norm_center.normalize();
-//   // cv::Mat R1cv = R0.clone(), R2cv = R1.clone(), t1cv = t0.clone(), t2cv = t1.clone();
-//   // float R1b[9], R2b[9], t1b[3], t2b[3], R21b[9], t21b[3], Kb[9];
-//   // memcpy(R1b, (float*)R1cv.data, sizeof(float)*9);
-//   // memcpy(R2b, (float*)R2cv.data, sizeof(float)*9);
-//   // memcpy(t1b, (float*)t1cv.data, sizeof(float)*3);
-//   // memcpy(t2b, (float*)t2cv.data, sizeof(float)*3);
-//   // memcpy(Kb, (float*)K.data, sizeof(float)*9);
-
-//   // Eigen::Matrix4f T1, T2; T1.setIdentity(); T2.setIdentity();
-//   // T1.block(0,0,3,3) = Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(R1b); 
-//   // T1.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(t1b);
-//   // T2.block(0,0,3,3) = Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(R2b); 
-//   // T2.block(0,3,3,1) = Eigen::Map<Eigen::Vector3f>(t2b);
-//   // Eigen::Matrix3f Ke = Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>>(Kb);
-
-//   // Eigen::Matrix4f T21 = T2*T1.inverse();
-//   // std::cout << "Eigen result: " << std::endl << T21.block(0,0,3,3) << std::endl << T21.block(0,3,3,1) << std::endl;
-
-//   // ComputeRelativePose(R1b, t1b, R2b, t2b, R21b, t21b);
-  
-//   // Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> R21be(R21b);
-//   // Eigen::Map<Eigen::Vector3f> t21be(t21b);
-//   // std::cout << "my result: " << std::endl << R21be << std::endl << t21be << std::endl;
-
-//   // // K * (R21 - t21 * n' / d) * Kref^-1.
-//   // float Hb[9];
-//   // int xc = 102, yc = 149;
-//   // float depth_c = 21.89f;
-//   // float idc = 1 / depth_c;
-//   // float dispc = bf * idc;
-//   // float normal[3] = {norm_center(0), norm_center(1), norm_center(2)};
-
-//   // float xp = 120, yp = 160;
-//   // printf("norm: %f, %f, %f\n", normal[0], normal[1], normal[2]);
-//   // float plane_a = -normal[0] / normal[2];
-//   // float plane_b = -normal[1] / normal[2];
-//   // float plane_c = (normal[0] * xc + normal[1] * yc + normal[2] *  dispc) / normal[2];
-
-
-//   // // float dispp = plane_a * xp + plane_b * yp + plane_c;
-//   // float dispp = (normal[0] * (xc-xp) + normal[1] *(yc-yp) ) / normal[2] + dispc;
-
-//   // float depth_p = bf / dispp;
-//   // printf("plane: %f, %f, %f\n", plane_a, plane_b, plane_c);
-//   // std::cout << "dispc: " << dispc <<std::endl;
-//   // std::cout << "dispp: " << dispp <<std::endl;
-//   // ComputeHomography(Kb, Kb, R1b, R2b, t1b, t2b, xc, yc, idc, normal, Hb);
-//   // Eigen::Matrix3f H;
-//   // ComputeHomographyEigen(Ke, Ke, T21, xc, yc, depth_c, norm_center, H);
-//   // Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> Hbe(Hb);
-//   // std::cout << "eigen H: " << std::endl << H << std::endl;
-//   // std::cout << "my H: " << std::endl << Hbe << std::endl;
-
-//   // // printf("compare dist!\n");
-//   // // Eigen::Vector3f p1(xc, yc, 1);
-//   // // Eigen::Vector3f p2(xp, yp, 1);
-//   // // Eigen::Vector3f pc1 = Ke.inverse() * p1 * depth_c;
-//   // // Eigen::Vector3f pc2 = Ke.inverse() * p2 * depth_p;
-//   // // std::cout << "first dist: " << pc1.transpose() * norm_center << std::endl;
-//   // // std::cout << "second dist: " << pc2.transpose() * norm_center << std::endl;
-//   // // {
-//   // //   Eigen::Vector3f uv1(xp, yp, 1);
-//   // //   Eigen::Matrix3f R21 = T21.block(0,0,3,3);
-//   // //   Eigen::Vector3f t21 = T21.block(0,3,3,1);
-//   // //   Compare(uv1, Ke, R21, t21, bf/dispp, norm_center);
-//   // // }
-
-
-//   // // // center warp
-//   // // std::cout << "center warp" << std::endl << std::endl;
-//   // // {
-//   // //   Eigen::Vector3f a1(xc, yc, 1), b1;
-//   // //   b1 = H*a1; b1 /= b1(2);
-//   // //   std::cout << "eigen result: " << b1.transpose() << std::endl;
-//   // //   float wx1, wy1;
-//   // //   HomogeneousWarp(Hb, xc, yc, wx1, wy1);
-//   // //   std::cout << "my result: " << wx1 << "  " << wy1 << std::endl;
-//   // //   Eigen::Matrix3f R21 = T21.block(0,0,3,3);
-//   // //   Eigen::Vector3f t21 = T21.block(0,3,3,1);
-//   // //   Eigen::Vector3f uv = warp(a1, Ke, R21, t21, depth_c);uv/=uv(2);
-//   // //   std::cout << "warp result: " << uv.transpose() << std::endl;  
-//   // //   std::cout << "stereo result: " << xc - dispc << "  " << yc  <<std::endl; 
-//   // // }
-
-//   // // region warp
-//   // std::cout << "region warp" << std::endl << std::endl; 
-//   // {
-//   //   Eigen::Vector3f a1(xp, yp, 1), b1;
-//   //   b1 = H*a1; b1 /= b1(2);
-//   //   std::cout << "eigen result: " << b1.transpose() << std::endl;
-//   //   float wx1, wy1;
-//   //   HomogeneousWarp(Hb, xp, yp, wx1, wy1);
-//   //   std::cout << "my result: " << wx1 << "  " << wy1 << std::endl;
-//   //   Eigen::Matrix3f R21 = T21.block(0,0,3,3);
-//   //   Eigen::Vector3f t21 = T21.block(0,3,3,1);
-//   //   Eigen::Vector3f uv = warp(a1, Ke, R21, t21, bf / dispp);uv/=uv(2);
-//   //   std::cout << "warp result: " << uv.transpose() << std::endl;  
-//   //   std::cout << "stereo result: " << xp - dispp << "  " << yp  <<std::endl;
-//   // }
-
-//   cv::Mat R21 = Rs[src_idx] * Rs[ref_idx].t();
-//   cv::Mat t21 = -R21 * ts[ref_idx] + ts[src_idx];
-
-//   // for(float depth = 0; depth < 1000; depth += 0.1f) {
-//   //   cv::Mat pi1(3, 1, CV_32F);
-//   //   pi1.at<float>(0) = xc, pi1.at<float>(1) = yc, pi1.at<float>(2) = 1.0f;
-//   //   cv::Mat pc1 = K.inv() * pi1 * depth;
-//   //   cv::Mat pc2 = K * (R21 * pc1 + t21);
-//   //   pc2 /= pc2.at<float>(2);
-
-//   //   cv::Point2f pref(xc, yc), psrc(pc2.at<float>(0), pc2.at<float>(1));
-//   //   cv::circle(img_color1, pref, 3, cv::Scalar(0,255,0), -1);
-//   //   cv::circle(img_color2, psrc, 3, cv::Scalar(0,255,0), -1);
-//   //   cv::imshow("color1", img_color1);
-//   //   cv::imshow("color2", img_color2);
-//   //   std::cout << "pref: " << pref << std::endl;
-//   //   std::cout << "psrc: " << psrc << std::endl; 
-//   //   std::cout << "depth: " << depth << std::endl; 
-//   //   while (1)
-//   //     {
-//   //       if(cv::waitKey(0) == 'q') break;
-//   //       /* code */
-//   //     }
-//   // }
-
-//   // Eigen::Vector3f norm_center(0.9, -0.9, -1); norm_center.normalize();
-//   // printf("here\n");
-//   // cv::Mat pi1(3, 1, CV_32F);
-//   // pi1.at<float>(0) = xc, pi1.at<float>(1) = yc, pi1.at<float>(2) = 1.0f;
-//   // printf("here\n");
-//   // cv::Mat norm(3, 1, CV_32F); 
-//   // norm.at<float>(0) = norm_center(0), norm.at<float>(1) = norm_center(1), norm.at<float>(2) = norm_center(2);
-//   // // norm = Rs[0] * norm;
-//   // printf("here\n");
-//   // cv::Mat pc = K.inv() * pi1 * depth_c;
-//   // float dist = pc.at<float>(0) * norm.at<float>(0) + pc.at<float>(1) * norm.at<float>(1) + pc.at<float>(2) * norm.at<float>(2);
-//   // std::cout << pi1.t() << std::endl;
-//   // std::cout << pc.t() << std::endl;
-//   // std::cout << norm.t() << std::endl;
-//   // std::cout << depth_c << std::endl;
-//   // std::cout << dist << std::endl;
-
-//   // cv::Mat H = K*(R21 + t21*norm.t()/dist) * K.inv();
-//   // for(int i = -15; i < 15; ++i) {
-//   //   for(int j = -15; j < 15; ++j) {
-//   //     float qx = (float)(xc + i*3), qy = (float)(yc + j*3);
-//   //     cv::Mat qref = cv::Mat_<float>(3, 1);
-//   //     qref.at<float>(0) = qx;
-//   //     qref.at<float>(1) = qy;
-//   //     qref.at<float>(2) = 1.0f;
-//   //     cv::Mat qsrc;
-//   //     qsrc = H * qref;
-//   //     // qsrc = K * (R21 * K.inv() * qref * depth_c + t21);
-//   //     float depth_p = qsrc.at<float>(2);
-//   //     qsrc /= qsrc.at<float>(2);
-//   //     std::cout << depth_p << std::endl;
-//   //     float qsx = qsrc.at<float>(0), qsy = qsrc.at<float>(1);
-//   //     cv::Point2f pref(qx, qy), psrc(qsx, qsy);
-//   //     cv::circle(img_color1, pref, 0, cv::Scalar(0,255,0), -1);
-//   //     cv::circle(img_color2, psrc, 0, cv::Scalar(depth_p*2,255 - depth_p*2,0), -1);
-//   //     cv::imshow("color1", img_color1);
-//   //     cv::imshow("color2", img_color2);
-//   //     while (1)
-//   //     {
-//   //       if(cv::waitKey(0) == 'q') break;
-//   //       /* code */
-//   //     }
-//   //   }
-//   // }
-
 //   PatchMatchOptions *options = new PatchMatchOptions();
-
-//   // Eigen::Vector3f n(0.1, 0.2, -0.8); n.normalize();
-//   // float normal[3] = {n.x(), n.y(), n.z()};
-//   // int x = 150, y = 200;
-//   // float depth = 100;
-//   // float disp_true = bf / depth;
-//   // std::cout << "disp_true: " << disp_true << std::endl;
-//   // TestHomographyWarpHost(K, R0, R1, t0, t1, x, y, depth, normal);
-  
-//   options->sigma_c = 10.0f;
-//   options->sigma_s = 10.0f;
+//   options->sigma_c = 12.0f;
+//   options->sigma_s = 12.0f;
 //   options->patch_size = 35;
-//   // TestComputNCCHost(img_left, img_left, K, R0, R0, t0, t0, x, y, depth, normal, options);
-
-//   cv::Mat depth_img, normal_img;
-//   MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options);
-//   mvs_matcher->SetReferenceView(img_left, K, Rs[0], ts[0]);
-//   mvs_matcher->AddSourceView(img_right, K, Rs[1], ts[1]);
-//   mvs_matcher->InitializeKRT();
+//   options->min_disparity = 1 / 50.0f;
+//   options->max_disparity = 1 / 1.0f;
+//   MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options, img_left.rows, img_left.cols);
+//   mvs_matcher->SetReferenceView(img_left, K, Rs[ref_idx], ts[ref_idx]);
+//   mvs_matcher->AddSourceView(img_right, K, Rs[src_idx], ts[src_idx]);
+//   mvs_matcher->Initialize();
+  
+//   cv::Mat  depth_img, normal_img;
 //   mvs_matcher->Run(depth_img, normal_img);
 
-//   cv::Mat color = cv::imread(path_left, cv::IMREAD_COLOR);
-//   ConvertDepthToCloud(color, depth_img, K, img_left.rows, img_left.cols);
+//   // cv::Mat color = cv::imread(path_left, cv::IMREAD_COLOR);
+//   // // // cv::pyrDown(color, color, cv::Size(color.cols/2, color.rows/2));
+//   // // color.resize(depth_img.rows, depth_img.cols);
+//   // ConvertDepthToCloud(color, depth_img, K, img_left.rows, img_left.cols);
 
 //   delete mvs_matcher;
 //   delete options;

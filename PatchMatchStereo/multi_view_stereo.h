@@ -25,6 +25,7 @@
 #include "display_utils.h"
 #include "data_io.h"
 #include "data_types.h"
+#include "helper_cuda.h"
 
 
 void TestHomographyWarpHost(const cv::Mat& K, const cv::Mat &R1, const cv::Mat &R2, const cv::Mat &t1, const cv::Mat &t2,

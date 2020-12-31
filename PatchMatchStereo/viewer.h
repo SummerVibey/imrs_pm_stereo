@@ -23,7 +23,7 @@ void ConvertDepthToCloud(const cv::Mat &color, const cv::Mat &depth, const cv::M
     for(int x = 0; x < width; ++x) {
       float xc, yc, zc;
       const float depth_ij = depth.at<float>(y,x);
-      if(depth_ij > 20) continue;
+      if(depth_ij > 50) continue;
       xc = depth_ij * (x - cx) / fx;
       yc = depth_ij * (y - cy) / fy;
       zc = depth_ij;

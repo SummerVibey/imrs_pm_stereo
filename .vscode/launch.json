@@ -1,0 +1,39 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            // "program": "${workspaceFolder}/bin/F2FAlignmentTest",
+            // "args": ["/home/imrs/KITTI-Dataset/data_odometry_velodyne/dataset/sequences/00/velodyne/",
+            //          "/home/imrs/KITTI-Dataset/poses/00.txt"],
+            // "program": "${workspaceFolder}/bin/FeatureExtractTest",
+            // "args": ["/home/imrs/KITTI-Dataset/data_odometry_velodyne/dataset/sequences/00/velodyne/"],
+            "program": "${workspaceFolder}/bin/CameraTrackerTest",
+            "args": ["/home/imrs/code/MultisensorSLAM/config/CameraTracker.yaml",
+                      "/home/imrs/code/MultisensorSLAM/config/img/1.png",
+                      "/home/imrs/code/MultisensorSLAM/config/img/2.png"], 
+            // "program": "${workspaceFolder}/bin/PoseGraphOptimizerTest",
+            // "args": ["/home/imrs/slambook/ch11/sphere.g2o"],
+            // "program": "${workspaceFolder}/bin/LidarOfflineSLAMTest",
+            // "args": ["/home/imrs/RoboSenseWS/lidarmiddle0921orb.txt",
+            //          "/home/imrs/RoboSenseWS/0921middle"],            
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
