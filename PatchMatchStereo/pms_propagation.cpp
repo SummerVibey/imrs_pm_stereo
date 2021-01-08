@@ -149,6 +149,7 @@ void PMSPropagation::ComputeCostData() const
 	}
 }
 
+
 void PMSPropagation::SpatialPropagation(const sint32& x, const sint32& y, const sint32& direction) const
 {
 	// ---

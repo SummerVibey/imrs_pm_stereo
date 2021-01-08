@@ -4,11 +4,11 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/yons/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp" "/home/yons/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o"
-  "/home/yons/imrs_pm_stereo/PatchMatchStereo/data_io.cpp" "/home/yons/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o"
-  "/home/yons/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp" "/home/yons/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o"
-  "/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp" "/home/yons/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o"
-  "/home/yons/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp" "/home/yons/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o"
+  "/home/yons/code/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp" "/home/yons/code/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o"
+  "/home/yons/code/imrs_pm_stereo/PatchMatchStereo/data_io.cpp" "/home/yons/code/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o"
+  "/home/yons/code/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp" "/home/yons/code/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o"
+  "/home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp" "/home/yons/code/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o"
+  "/home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp" "/home/yons/code/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

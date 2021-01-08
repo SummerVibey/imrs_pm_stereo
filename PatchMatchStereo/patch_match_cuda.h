@@ -146,8 +146,7 @@ public:
 	/** \brief ��Ӱ��ƽ�漯	*/
 	DispPlane* plane_right_;
 
-  curandState* cs_left_;
-  curandState* cs_right_;
+  curandState* curand_state_;
 
 	/** \brief �Ƿ��ʼ����־	*/
 	bool is_initialized_;

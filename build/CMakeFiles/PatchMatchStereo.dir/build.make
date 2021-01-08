@@ -43,10 +43,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/yons/imrs_pm_stereo
+CMAKE_SOURCE_DIR = /home/yons/code/imrs_pm_stereo
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/yons/imrs_pm_stereo/build
+CMAKE_BINARY_DIR = /home/yons/code/imrs_pm_stereo/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/PatchMatchStereo.dir/depend.make
@@ -59,16 +59,16 @@ include CMakeFiles/PatchMatchStereo.dir/flags.make
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o: CMakeFiles/PatchMatchStereo.dir/flags.make
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o: ../PatchMatchStereo/PatchMatchStereo.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o"
-	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o -c /home/yons/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.i"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.i
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.s"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/PatchMatchStereo.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.s
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o.requires:
 
@@ -83,16 +83,16 @@ CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/PatchMatchStereo.cpp.o.provides
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o: CMakeFiles/PatchMatchStereo.dir/flags.make
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o: ../PatchMatchStereo/pms_propagation.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o"
-	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o -c /home/yons/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.i"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.i
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.s"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_propagation.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.s
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o.requires:
 
@@ -107,16 +107,16 @@ CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_propagation.cpp.o.provides.
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o: CMakeFiles/PatchMatchStereo.dir/flags.make
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o: ../PatchMatchStereo/pms_util.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o"
-	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o -c /home/yons/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.i"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.i
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.s"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/pms_util.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.s
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o.requires:
 
@@ -131,16 +131,16 @@ CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.o.provides.build: 
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o: CMakeFiles/PatchMatchStereo.dir/flags.make
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o: ../PatchMatchStereo/display_utils.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o"
-	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o -c /home/yons/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.i"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.i
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.s"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/display_utils.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.s
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o.requires:
 
@@ -155,16 +155,16 @@ CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.o.provides.bu
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o: CMakeFiles/PatchMatchStereo.dir/flags.make
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o: ../PatchMatchStereo/data_io.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o"
-	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o -c /home/yons/imrs_pm_stereo/PatchMatchStereo/data_io.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/data_io.cpp
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.i"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/imrs_pm_stereo/PatchMatchStereo/data_io.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/data_io.cpp > CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.i
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.s"
-	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/imrs_pm_stereo/PatchMatchStereo/data_io.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/data_io.cpp -o CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.s
 
 CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o.requires:
 
@@ -195,7 +195,7 @@ PatchMatchStereo_EXTERNAL_OBJECTS =
 ../lib/libPatchMatchStereo.so: CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/data_io.cpp.o
 ../lib/libPatchMatchStereo.so: CMakeFiles/PatchMatchStereo.dir/build.make
 ../lib/libPatchMatchStereo.so: CMakeFiles/PatchMatchStereo.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/yons/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX shared library ../lib/libPatchMatchStereo.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX shared library ../lib/libPatchMatchStereo.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/PatchMatchStereo.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -216,6 +216,6 @@ CMakeFiles/PatchMatchStereo.dir/clean:
 .PHONY : CMakeFiles/PatchMatchStereo.dir/clean
 
 CMakeFiles/PatchMatchStereo.dir/depend:
-	cd /home/yons/imrs_pm_stereo/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/yons/imrs_pm_stereo /home/yons/imrs_pm_stereo /home/yons/imrs_pm_stereo/build /home/yons/imrs_pm_stereo/build /home/yons/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/yons/code/imrs_pm_stereo/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/yons/code/imrs_pm_stereo /home/yons/code/imrs_pm_stereo /home/yons/code/imrs_pm_stereo/build /home/yons/code/imrs_pm_stereo/build /home/yons/code/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/PatchMatchStereo.dir/depend
 
