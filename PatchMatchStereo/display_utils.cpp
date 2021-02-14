@@ -161,3 +161,26 @@ void ShowCostAndHistogram(float *cost, int height, int width)
   }
 
 }
+
+void RenderDepthAndNormalMap(const float *depth_data, const float *normal_data, const int height, const int width)
+{
+  cv::Mat_<float> depth_image(height, width);
+  cv::Mat_<cv::Vec3f> normal_image(height, width);
+  for(int i = 0; i < height; ++i) {
+    for(int j = 0; j < width; ++j) {
+      const int center = i*width+j;
+      depth_image(i, j) = depth_data[center];
+      normal_image(i, j) = cv::Vec3f(normal_data[center*3], normal_data[center*3+1], normal_data[center*3+2]);
+    }
+  }
+  cv::Mat inv_depth_display, norm_display;
+  ConvertDepthForDisplay(depth_image, inv_depth_display);
+  ConvertNormalsForDisplay(normal_image, norm_display);
+  cv::imshow("inv_depth_display", inv_depth_display);
+  cv::imshow("norm_display", norm_display); 
+	while(1)
+	{
+		if(cv::waitKey(0) == 'q')
+			break;
+	}
+}

@@ -42,11 +42,11 @@ __device__ __forceinline__ float BilateralWeight(
   const float x_diff, 
   const float y_diff, 
   const float color_diff, 
-  const float sigma_s, 
-  const float sigma_c)
+  const float sigma_spatial, 
+  const float sigma_color)
 {
-  // return expf( -(x_diff * x_diff + y_diff * y_diff) / (2 * sigma_s * sigma_s) - color_diff * color_diff / (2 * sigma_c * sigma_c));
-  return expf( -sqrtf(x_diff * x_diff + y_diff * y_diff) / sigma_s - abs(color_diff) / sigma_c);
+  // return expf( -(x_diff * x_diff + y_diff * y_diff) / (2 * sigma_spatial * sigma_spatial) - color_diff * color_diff / (2 * sigma_color * sigma_color));
+  return expf( -sqrtf(x_diff * x_diff + y_diff * y_diff) / sigma_spatial - abs(color_diff) / sigma_color);
 }
 
 __device__ __forceinline__ float GenerateRandomDisp(
@@ -341,12 +341,12 @@ __device__ __forceinline__ float ComputeCostRegionCuda(
       const float ds = abs(px - qx) + abs(py - qy);
       // printf("dc=%f\n", dc);
       // const float w = expf(-dc / options->gamma);
-      const float w = expf(-ds / options->sigma_s - dc / options->sigma_c);
+      const float w = expf(-ds / options->sigma_spatial - dc / options->sigma_color);
       
       // const float dc = fabs((col_p.x * 0.299f + col_p.y * 0.587f + col_p.z * 0.114f) - (col_q.x * 0.299f + col_q.y * 0.587f + col_q.z * 0.114f));
       // const float w = expf(-(abs(px-qx) + abs(py-qy)) / options->gamma) * expf(-dc / options->gamma);
       // const float dc = fabs(col_p.z - col_q.z) + fabs(col_p.y - col_q.y) + fabs(col_p.x - col_q.x);
-      // const float w = expf(-dc / options->sigma_c);
+      // const float w = expf(-dc / options->sigma_color);
       // �ۺϴ���
       // Vector2f grad_q;
       // GetGradientCuda(grad_left, &grad_q, qx, yr, width);
@@ -390,9 +390,9 @@ __device__ __forceinline__ float ComputePMCostRegion(
       float col_q = color(img_left, qx, qy);;
       const float dc = fabs(col_p - col_q);
       const float ds = abs(px - qx) + abs(py - qy);
-      const float w = expf(-ds / options->sigma_s - dc / options->sigma_c);
+      const float w = expf(-ds / options->sigma_spatial - dc / options->sigma_color);
 
-      float bilateral_weight = BilateralWeight(c, r, col_p - col_q, options->sigma_s, options->sigma_c);
+      float bilateral_weight = BilateralWeight(c, r, col_p - col_q, options->sigma_spatial, options->sigma_color);
       float disp = (is_right) ? -dq : dq;
       cost += bilateral_weight * ComputeCostPointTexture(img_left, img_right, qx, qy, disp, options, width);
     }
@@ -431,7 +431,7 @@ __device__ __forceinline__ float ComputePMCostRegion(
 //       const float ref_color = color(tex_ref, qx, qy);
 //       const float src_color = color(tex_src, qx - dq, qy);
 
-//       float bilateral_weight = BilateralWeight(c, r, ref_color - ref_center_color, options->sigma_s, options->sigma_c);
+//       float bilateral_weight = BilateralWeight(c, r, ref_color - ref_center_color, options->sigma_spatial, options->sigma_color);
 
 //       const float bilateral_weight_ref = bilateral_weight * ref_color;
 //       const float bilateral_weight_src = bilateral_weight * src_color;
@@ -599,7 +599,7 @@ void GetInitialCostHost(
   int width)
 {
   CostComputerPMSHost* cost_computer = new CostComputerPMSHost(color_left, color_right, grad_left, grad_right, width, height,
-    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_c,
+    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_color,
     options->alpha, options->tau_col, options->tau_grad);
 
   for(int y = 0; y < height; ++y) {
@@ -628,7 +628,7 @@ void GetInitialCostHostPoint(
   int width)
 {
   CostComputerPMSHost* cost_computer = new CostComputerPMSHost(color_left, color_right, grad_left, grad_right, width, height,
-    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_c,
+    options->patch_size, options->min_disparity, options->max_disparity, options->sigma_color,
     options->alpha, options->tau_col, options->tau_grad);
 
 
@@ -1002,7 +1002,7 @@ __device__ __forceinline__ void PlaneRefinementTexture(
 	}
 }
 
-__device__ __forceinline__ void Propagate(
+__device__ __forceinline__ void PropagateBase(
   const uint8_t *color_left, 
   const uint8_t *color_right, 
   const Gradient *grad_left, 
@@ -1630,7 +1630,7 @@ bool StereoMatcherCuda::Match(const uint8_t* img_left, const uint8_t* img_right,
     printf("show black\n");
     ShowDisparityAndNormalMap(plane_left_, height_, width_);
   }
-  // printf("Start Propagate!\n");
+  // printf("Start PropagateBase!\n");
   // for(int iter = 0; iter < 1; ++iter) {
   //   PropagateInOrder<<<1, 1>>>(img_left, img_right, grad_left_, grad_right_, plane_left_, cost_left_, curand_state_, options_, params_, height_, width_, iter);
   //   cudaDeviceSynchronize();

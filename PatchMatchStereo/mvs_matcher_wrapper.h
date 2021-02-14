@@ -73,6 +73,10 @@ public:
 
   void Run(cv::Mat &depth, cv::Mat &normal);
 
+  void RunBottom();
+
+  void RunDebug();
+
   // void GetPointCloud(cv::Mat &depth, cv::Mat &normal, int level);
 
   MultiViewStereoMatcherCuda *matcher_;

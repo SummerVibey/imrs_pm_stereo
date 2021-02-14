@@ -60,10 +60,13 @@ struct PatchMatchOptions : public GlobalMalloc
 	
 	float min_disparity;		// ��С�Ӳ�
 	float	max_disparity;		// ����Ӳ�
+  float min_depth;
+  float max_depth;
 
   int	patch_size;			// patch�ߴ磬�ֲ�����Ϊ patch_size*patch_size
-	float	sigma_s;			//
-  float sigma_c;       
+  int step_size;
+	float	sigma_spatial;			//
+  float sigma_color;       
 	float	alpha;				// alpha ���ƶ�ƽ������
 	float	tau_col;			// tau for color	���ƶȼ�����ɫ�ռ�ľ��Բ���½ض���ֵ
 	float	tau_grad;			// tau for gradient ���ƶȼ����ݶȿռ�ľ��Բ��½ض���ֵ
@@ -79,7 +82,8 @@ struct PatchMatchOptions : public GlobalMalloc
 	bool	is_integer_disp;	// �Ƿ�Ϊ�������Ӳ�
 	
 	PatchMatchOptions() : 
-    patch_size(35), min_disparity(0.0f), max_disparity(0.5f), sigma_s(3.0f), sigma_c(10.0f), alpha(0.9f), tau_col(10.0f),
+    min_disparity(0.0f), max_disparity(0.5f), min_depth(1.0f), max_depth(50.0f),
+    patch_size(35), step_size(1), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
     tau_grad(2.0f), num_iters(3), is_check_lr(false), lrcheck_thres(0),
     is_fill_holes(false), is_fource_fpw(false), is_integer_disp(false) {}
 
@@ -88,10 +92,13 @@ struct PatchMatchOptions : public GlobalMalloc
     printf("Patch Match Stereo Matcher Options\n");
     printf("----------------------------------\n");
     printf("   patch_size: %d\n", patch_size);
+    printf("    step_size: %d\n", step_size);
     printf("min_disparity: %f\n", min_disparity);
     printf("max_disparity: %f\n", max_disparity);
-    printf("      sigma_s: %f\n", sigma_s);
-    printf("      sigma_c: %f\n", sigma_c);
+    printf("    min_depth: %f\n", min_depth);
+    printf("    max_depth: %f\n", max_depth);
+    printf("      sigma_spatial: %f\n", sigma_spatial);
+    printf("      sigma_color: %f\n", sigma_color);
     printf("        alpha: %f\n", alpha);
     printf("      tau_col: %f\n", tau_col);
     printf("     tau_grad: %f\n", tau_grad);
@@ -489,24 +496,24 @@ public:
   float *t_;
 };
 
-class ViewSpace : public GlobalMalloc
+class ViewType : public GlobalMalloc
 {
 public:
-  ViewSpace() : params_(nullptr) {}
+  ViewType() : params_(nullptr) {}
 
-  ViewSpace(const cv::Mat_<float> &K, const cv::Mat_<float> &R, const cv::Mat_<float> &t, int height, int width)
+  ViewType(const cv::Mat_<float> &K, const cv::Mat_<float> &R, const cv::Mat_<float> &t, int height, int width)
   {
     width_ = width;
     height_ = height;
     params_ = new MultiViewGeometryParams(K, R, t);
   }
-  ViewSpace(const cv::Mat_<float> &P, int height, int width)
+  ViewType(const cv::Mat_<float> &P, int height, int width)
   {
     width_ = width;
     height_ = height;
     params_ = new MultiViewGeometryParams(P);
   }
-  ~ViewSpace()
+  ~ViewType()
   {
     DestroyTextureObject(tex_, arr_);
     CallSafeDelete(params_);
@@ -519,40 +526,49 @@ public:
   
 };
 
-class RefViewSpace : public ViewSpace
+class RefViewType : public ViewType
 {
 public:
-  RefViewSpace(const cv::Mat_<float> &K, const cv::Mat_<float> &R, const cv::Mat_<float> &t, int height, int width) 
+  RefViewType(const cv::Mat_<float> &K, const cv::Mat_<float> &R, const cv::Mat_<float> &t, int height, int width) 
   {
     width_ = width;
     height_ = height;
 
     params_ = new MultiViewGeometryParams(K, R, t);
-    checkCudaErrors(cudaMallocManaged((void **)&cost_, sizeof(float) * width_ * height_));
-    checkCudaErrors(cudaMallocManaged((void **)&cs_, sizeof(curandState) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&depth_map_, sizeof(float) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&normal_map_, sizeof(float) * width_ * height_ * 3));
+    checkCudaErrors(cudaMallocManaged((void **)&cost_map_, sizeof(float) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&curand_map_, sizeof(curandState) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&plane_, sizeof(PlaneState) * width_ * height_));
+
   }
-  RefViewSpace(const cv::Mat_<float> &P, int height, int width) 
+  RefViewType(const cv::Mat_<float> &P, int height, int width) 
   {
     width_ = width;
     height_ = height;
     params_ = new MultiViewGeometryParams(P);
-    checkCudaErrors(cudaMallocManaged((void **)&cost_, sizeof(float) * width_ * height_));
-    checkCudaErrors(cudaMallocManaged((void **)&cs_, sizeof(curandState) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&depth_map_, sizeof(float) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&normal_map_, sizeof(float) * width_ * height_ * 3));
+    checkCudaErrors(cudaMallocManaged((void **)&cost_map_, sizeof(float) * width_ * height_));
+    checkCudaErrors(cudaMallocManaged((void **)&curand_map_, sizeof(curandState) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&plane_, sizeof(PlaneState) * width_ * height_));
   }
-  ~RefViewSpace()
+  ~RefViewType()
   {
     DestroyTextureObject(tex_, arr_);
-    checkCudaErrors(cudaFree(cs_));
+    checkCudaErrors(cudaFree(depth_map_));
+    checkCudaErrors(cudaFree(normal_map_));
+    checkCudaErrors(cudaFree(curand_map_));
     checkCudaErrors(cudaFree(plane_));
-    checkCudaErrors(cudaFree(cost_));
+    checkCudaErrors(cudaFree(cost_map_));
     CallSafeDelete(params_);
   }
-
-  float* cost_;
-  curandState* cs_;
+  float* depth_map_;
+  float* normal_map_;
+  float* cost_map_;
+  curandState* curand_map_;
   PlaneState* plane_;
+
 };
 
 class MultiViewStereoMatcherCuda : public GlobalMalloc
@@ -580,14 +596,14 @@ public:
 
   void Match(cv::Mat &depth, cv::Mat &normal);
 
+  void Match();
+
   PatchMatchOptions *options_;
   int image_size_;
 
-  RefViewSpace *ref_;
-  ViewSpace *src_[MAX_IMAGES_SIZE];
-  
+  RefViewType *ref_;
+  ViewType *src_[MAX_IMAGES_SIZE];
 
-  
   
 };
 

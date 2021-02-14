@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 	pms_options->patch_size = 35;
 	pms_options->min_disparity = 0.0f;
 	pms_options->max_disparity = 64.0f;
-	pms_options->sigma_c = 10.0f;
+	pms_options->sigma_color = 10.0f;
 	pms_options->alpha = 0.9f;
 	pms_options->tau_col = 10.0f;
 	pms_options->tau_grad = 2.0f;

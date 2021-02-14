@@ -126,8 +126,8 @@ if (argc < 3) {
   // int src_size = 2;
 
   PatchMatchOptions *options = new PatchMatchOptions();
-  options->sigma_c = 10.0f;
-  options->sigma_s = 15.0f;
+  options->sigma_color = 10.0f;
+  options->sigma_spatial = 15.0f;
   options->patch_size = 15;
   options->max_disparity = 0.4f;
   MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options, height, width);
@@ -136,12 +136,13 @@ if (argc < 3) {
   mvs_matcher->Initialize();
   
   cv::Mat  depth_img, normal_img;
-  mvs_matcher->Run(depth_img, normal_img);
+  // mvs_matcher->Run(depth_img, normal_img);
+  mvs_matcher->RunDebug();
 
-  cv::Mat color = cv::imread(path_left, cv::IMREAD_COLOR);
+  // cv::Mat color = cv::imread(path_left, cv::IMREAD_COLOR);
   // // cv::pyrDown(color, color, cv::Size(color.cols/2, color.rows/2));
   // color.resize(depth_img.rows, depth_img.cols);
-  ConvertDepthToCloud(color, depth_img, K, height, width);
+  // ConvertDepthToCloud(color, depth_img, K, height, width);
 
   delete mvs_matcher;
   delete options;
@@ -438,8 +439,8 @@ if (argc < 3) {
 //   SelectCudaDevice();
 
 //   PatchMatchOptions *options = new PatchMatchOptions();
-//   options->sigma_c = 12.0f;
-//   options->sigma_s = 12.0f;
+//   options->sigma_color = 12.0f;
+//   options->sigma_spatial = 12.0f;
 //   options->patch_size = 35;
 //   options->min_disparity = 1 / 50.0f;
 //   options->max_disparity = 1 / 1.0f;

@@ -71,12 +71,12 @@ void MVSMatcherWrapper::Initialize()
 void MVSMatcherWrapper::Run(cv::Mat &depth, cv::Mat &normal, int level)
 {
   matcher_->Reset(options_, imgs_src_[level].size());
-  matcher_->ref_ = new RefViewSpace(Kref_[level], Rrw_, trw_, img_ref_[level].rows, img_ref_[level].cols);
+  matcher_->ref_ = new RefViewType(Kref_[level], Rrw_, trw_, img_ref_[level].rows, img_ref_[level].cols);
   CreateTextureObject(img_ref_[level], matcher_->ref_->tex_, matcher_->ref_->arr_);
 
   assert(imgs_src_.size() == Rsws_.size() == tsws_.size() == Ksrcs_.size());
   for(int i = 0; i < matcher_->image_size_; ++i) {
-    matcher_->src_[i] = new ViewSpace(Ksrcs_[level][i], Rsws_[i], tsws_[i], imgs_src_[level][i].rows, imgs_src_[0][i].cols);
+    matcher_->src_[i] = new ViewType(Ksrcs_[level][i], Rsws_[i], tsws_[i], imgs_src_[level][i].rows, imgs_src_[0][i].cols);
     CreateTextureObject(imgs_src_[level][i], matcher_->src_[i]->tex_, matcher_->src_[i]->arr_);
   }
   printf("Multi-View Stereo Matcher has been initialized!\n");
@@ -91,6 +91,34 @@ void MVSMatcherWrapper::Run(cv::Mat &depth, cv::Mat &normal)
 {
   matcher_ = new MultiViewStereoMatcherCuda();
   Run(depth, normal, 0);
+  ReleaseAll();
+}
+
+void MVSMatcherWrapper::RunBottom()
+{
+  matcher_->Reset(options_, imgs_src_[0].size());
+  matcher_->ref_ = new RefViewType(Kref_[0], Rrw_, trw_, img_ref_[0].rows, img_ref_[0].cols);
+  CreateTextureObject(img_ref_[0], matcher_->ref_->tex_, matcher_->ref_->arr_);
+
+  assert(imgs_src_.size() == Rsws_.size() == tsws_.size() == Ksrcs_.size());
+  for(int i = 0; i < matcher_->image_size_; ++i) {
+    matcher_->src_[i] = new ViewType(Ksrcs_[0][i], Rsws_[i], tsws_[i], imgs_src_[0][i].rows, imgs_src_[0][i].cols);
+    CreateTextureObject(imgs_src_[0][i], matcher_->src_[i]->tex_, matcher_->src_[i]->arr_);
+  }
+  printf("Multi-View Stereo Matcher has been initialized!\n");
+  matcher_->options_->Print();
+  printf("You have added %d source view!\n", matcher_->image_size_);
+
+  ReleaseLevel(0);
+  matcher_->Match();
+  ReleaseAll();
+}
+
+void MVSMatcherWrapper::RunDebug()
+{
+  matcher_ = new MultiViewStereoMatcherCuda();
+  printf("Start to run mvs on cuda!\n");
+  RunBottom();
   ReleaseAll();
 }
 
