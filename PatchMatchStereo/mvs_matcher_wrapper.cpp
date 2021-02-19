@@ -6,19 +6,19 @@ MVSMatcherWrapper::MVSMatcherWrapper(PatchMatchOptions *options, int height, int
   height_ = height;
   options_ = options; 
 
-  int height_lvl = height;
-  int width_lvl = width;
-  max_level_ = 0;
-  while(height_lvl > min_height && width_lvl > min_width) {
-    max_level_++;
-    height_lvl /= 2;
-    width_lvl /= 2;
-  }
+  // int height_lvl = height;
+  // int width_lvl = width;
+  // max_level_ = 0;
+  // while(height_lvl > min_height && width_lvl > min_width) {
+  //   max_level_++;
+  //   height_lvl /= 2;
+  //   width_lvl /= 2;
+  // }
 
-  img_ref_.resize(max_level_ + 1);
-  imgs_src_.resize(max_level_ + 1);
-  Kref_.resize(max_level_ + 1);
-  Ksrcs_.resize(max_level_ + 1);
+  // img_ref_.resize(max_level_ + 1);
+  // imgs_src_.resize(max_level_ + 1);
+  // Kref_.resize(max_level_ + 1);
+  // Ksrcs_.resize(max_level_ + 1);
 
   printf("You have constructed MVS Matcher Successfully! The image pyramid has %d levels!\n", max_level_ + 1);
   printf("Now you can add registered images as reference view and source views!\n");
@@ -27,63 +27,66 @@ MVSMatcherWrapper::MVSMatcherWrapper(PatchMatchOptions *options, int height, int
 void MVSMatcherWrapper::SetReferenceView(const cv::Mat& img, const cv::Mat_<float> &K, const cv::Mat_<float> &Rcw, const cv::Mat_<float> &tcw)
 {
 
-  img_ref_[0] = img.clone();
-  Kref_[0] = K.clone();
+  // img_ref_[0] = img.clone();
+  // Kref_[0] = K.clone();
+  // Rrw_ = Rcw.clone();
+  // trw_ = tcw.clone();
+  img_ref_ = img.clone();
+  Kref_ = K.clone();
   Rrw_ = Rcw.clone();
   trw_ = tcw.clone();
 }
 
 void MVSMatcherWrapper::AddSourceView(const cv::Mat& img, const cv::Mat_<float> &K, const cv::Mat_<float> &Rcw, const cv::Mat_<float> &tcw)
 {
-  imgs_src_[0].push_back(img);
-  Ksrcs_[0].push_back(K);
+  imgs_src_.push_back(img);
+  Ksrcs_.push_back(K);
   Rsws_.push_back(Rcw);
   tsws_.push_back(tcw);
 }
 
 void MVSMatcherWrapper::Initialize()
 {
-  int images_size = imgs_src_[0].size();
-  for(int lvl = 1; lvl <= max_level_; lvl++) {
-    cv::pyrDown(img_ref_[lvl-1], img_ref_[lvl], cv::Size(img_ref_[lvl-1].cols/2, img_ref_[lvl-1].rows/2));
+  int images_size = imgs_src_.size();
+  // for(int lvl = 1; lvl <= max_level_; lvl++) {
+  //   cv::pyrDown(img_ref_[lvl-1], img_ref_[lvl], cv::Size(img_ref_[lvl-1].cols/2, img_ref_[lvl-1].rows/2));
 
-    width_scale_ = (float)img_ref_[lvl].cols / (float)img_ref_[lvl-1].cols;
-    height_scale_ = (float)img_ref_[lvl].rows / (float)img_ref_[lvl-1].rows;
-    Kref_[lvl] = Kref_[lvl-1].clone();
-    Kref_[lvl].rowRange(0,1) *= width_scale_;
-    Kref_[lvl].rowRange(1,2) *= height_scale_;
+  //   width_scale_ = (float)img_ref_[lvl].cols / (float)img_ref_[lvl-1].cols;
+  //   height_scale_ = (float)img_ref_[lvl].rows / (float)img_ref_[lvl-1].rows;
+  //   Kref_[lvl] = Kref_[lvl-1].clone();
+  //   Kref_[lvl].rowRange(0,1) *= width_scale_;
+  //   Kref_[lvl].rowRange(1,2) *= height_scale_;
     
-    imgs_src_[lvl].resize(images_size);
-    Ksrcs_[lvl].resize(images_size);
-    for(int i = 0; i < images_size; ++i) {
-      cv::pyrDown(imgs_src_[lvl-1][i], imgs_src_[lvl][i], cv::Size(imgs_src_[lvl-1][i].cols/2, imgs_src_[lvl-1][i].rows/2));
-      width_scale_ = img_ref_[lvl].cols/2 / img_ref_[lvl-1].cols/2;
-      height_scale_ = img_ref_[lvl].rows/2 / img_ref_[lvl-1].rows/2;
-      width_scale_ = (float)imgs_src_[lvl][i].cols / (float)imgs_src_[lvl-1][i].cols;
-      height_scale_ = (float)imgs_src_[lvl][i].rows / (float)imgs_src_[lvl-1][i].rows;
-      Ksrcs_[lvl][i] = Ksrcs_[lvl-1][i].clone();
-      Ksrcs_[lvl][i].rowRange(0,1) *= width_scale_;
-      Ksrcs_[lvl][i].rowRange(1,2) *= height_scale_;
-    }
-  }
+  //   imgs_src_[lvl].resize(images_size);
+  //   Ksrcs_[lvl].resize(images_size);
+  //   for(int i = 0; i < images_size; ++i) {
+  //     cv::pyrDown(imgs_src_[lvl-1][i], imgs_src_[lvl][i], cv::Size(imgs_src_[lvl-1][i].cols/2, imgs_src_[lvl-1][i].rows/2));
+  //     width_scale_ = img_ref_[lvl].cols/2 / img_ref_[lvl-1].cols/2;
+  //     height_scale_ = img_ref_[lvl].rows/2 / img_ref_[lvl-1].rows/2;
+  //     width_scale_ = (float)imgs_src_[lvl][i].cols / (float)imgs_src_[lvl-1][i].cols;
+  //     height_scale_ = (float)imgs_src_[lvl][i].rows / (float)imgs_src_[lvl-1][i].rows;
+  //     Ksrcs_[lvl][i] = Ksrcs_[lvl-1][i].clone();
+  //     Ksrcs_[lvl][i].rowRange(0,1) *= width_scale_;
+  //     Ksrcs_[lvl][i].rowRange(1,2) *= height_scale_;
+  //   }
+  // }
 } 
 
 void MVSMatcherWrapper::Run(cv::Mat &depth, cv::Mat &normal, int level)
 {
-  matcher_->Reset(options_, imgs_src_[level].size());
-  matcher_->ref_ = new RefViewType(Kref_[level], Rrw_, trw_, img_ref_[level].rows, img_ref_[level].cols);
-  CreateTextureObject(img_ref_[level], matcher_->ref_->tex_, matcher_->ref_->arr_);
+  matcher_->Reset(options_, imgs_src_.size());
+  matcher_->ref_ = new RefViewType(Kref_, Rrw_, trw_, img_ref_.rows, img_ref_.cols);
+  CreateTextureObject(img_ref_, matcher_->ref_->tex_, matcher_->ref_->arr_);
 
   assert(imgs_src_.size() == Rsws_.size() == tsws_.size() == Ksrcs_.size());
   for(int i = 0; i < matcher_->image_size_; ++i) {
-    matcher_->src_[i] = new ViewType(Ksrcs_[level][i], Rsws_[i], tsws_[i], imgs_src_[level][i].rows, imgs_src_[0][i].cols);
-    CreateTextureObject(imgs_src_[level][i], matcher_->src_[i]->tex_, matcher_->src_[i]->arr_);
+    matcher_->src_[i] = new ViewType(Ksrcs_[i], Rsws_[i], tsws_[i], imgs_src_[i].rows, imgs_src_[i].cols);
+    CreateTextureObject(imgs_src_[i], matcher_->src_[i]->tex_, matcher_->src_[i]->arr_);
   }
   printf("Multi-View Stereo Matcher has been initialized!\n");
   matcher_->options_->Print();
   printf("You have added %d source view!\n", matcher_->image_size_);
 
-  ReleaseLevel(level);
   matcher_->Match(depth, normal);
 }
 
@@ -96,21 +99,21 @@ void MVSMatcherWrapper::Run(cv::Mat &depth, cv::Mat &normal)
 
 void MVSMatcherWrapper::RunBottom()
 {
-  matcher_->Reset(options_, imgs_src_[0].size());
-  matcher_->ref_ = new RefViewType(Kref_[0], Rrw_, trw_, img_ref_[0].rows, img_ref_[0].cols);
-  CreateTextureObject(img_ref_[0], matcher_->ref_->tex_, matcher_->ref_->arr_);
+  matcher_->Reset(options_, imgs_src_.size());
+  matcher_->ref_ = new RefViewType(Kref_, Rrw_, trw_, img_ref_.rows, img_ref_.cols);
+  CreateTextureObject(img_ref_, matcher_->ref_->tex_, matcher_->ref_->arr_);
+  matcher_->ref_->Allocate(imgs_src_.size());
 
   assert(imgs_src_.size() == Rsws_.size() == tsws_.size() == Ksrcs_.size());
   for(int i = 0; i < matcher_->image_size_; ++i) {
-    matcher_->src_[i] = new ViewType(Ksrcs_[0][i], Rsws_[i], tsws_[i], imgs_src_[0][i].rows, imgs_src_[0][i].cols);
-    CreateTextureObject(imgs_src_[0][i], matcher_->src_[i]->tex_, matcher_->src_[i]->arr_);
+    matcher_->src_[i] = new ViewType(Ksrcs_[i], Rsws_[i], tsws_[i], imgs_src_[i].rows, imgs_src_[i].cols);
+    CreateTextureObject(imgs_src_[i], matcher_->src_[i]->tex_, matcher_->src_[i]->arr_);
   }
   printf("Multi-View Stereo Matcher has been initialized!\n");
   matcher_->options_->Print();
   printf("You have added %d source view!\n", matcher_->image_size_);
 
-  ReleaseLevel(0);
-  matcher_->Match();
+  matcher_->Match(imgs_src_.size());
   ReleaseAll();
 }
 

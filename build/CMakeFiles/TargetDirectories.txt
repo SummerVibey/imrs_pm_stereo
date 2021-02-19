@@ -5,5 +5,6 @@
 /home/yons/code/imrs_pm_stereo/build/CMakeFiles/PatchMatchStereo.dir
 /home/yons/code/imrs_pm_stereo/build/CMakeFiles/patch_match_demo.dir
 /home/yons/code/imrs_pm_stereo/build/CMakeFiles/stereo_texture_test.dir
+/home/yons/code/imrs_pm_stereo/build/CMakeFiles/mvs_test.dir
 /home/yons/code/imrs_pm_stereo/build/CMakeFiles/stereo_cuda_test.dir
 /home/yons/code/imrs_pm_stereo/build/CMakeFiles/mvs_texture_test.dir

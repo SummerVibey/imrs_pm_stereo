@@ -29,6 +29,8 @@ void ShowDepthAndNormal(const PlaneState *plane_data, int height, int width);
 
 void ShowCostAndHistogram(float *cost, int height, int width);
 
+void ShowCostSliceAndHistogram(float *cost_volume, int src_size, int channel, int height, int width);
+
 void RenderDepthAndNormalMap(const float *depth_data, const float *normal_data, const int height, const int width);
 
 #endif

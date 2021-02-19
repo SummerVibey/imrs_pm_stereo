@@ -80,10 +80,16 @@ struct PatchMatchOptions : public GlobalMalloc
 
 	bool	is_fource_fpw;		// �Ƿ�ǿ��ΪFrontal-Parallel Window
 	bool	is_integer_disp;	// �Ƿ�Ϊ�������Ӳ�
-	
+
 	PatchMatchOptions() : 
-    min_disparity(0.0f), max_disparity(0.5f), min_depth(1.0f), max_depth(50.0f),
-    patch_size(35), step_size(1), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
+    min_disparity(0.0f), max_disparity(0.5f), min_depth(0.1f), max_depth(10.0f),
+    patch_size(35), step_size(2), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
+    tau_grad(2.0f), num_iters(3), is_check_lr(false), lrcheck_thres(0),
+    is_fill_holes(false), is_fource_fpw(false), is_integer_disp(false) {}
+	
+	PatchMatchOptions(float _min_depth, float _max_depth) : 
+    min_disparity(0.0f), max_disparity(0.5f), min_depth(_min_depth), max_depth(_max_depth),
+    patch_size(35), step_size(2), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
     tau_grad(2.0f), num_iters(3), is_check_lr(false), lrcheck_thres(0),
     is_fill_holes(false), is_fource_fpw(false), is_integer_disp(false) {}
 
@@ -97,8 +103,8 @@ struct PatchMatchOptions : public GlobalMalloc
     printf("max_disparity: %f\n", max_disparity);
     printf("    min_depth: %f\n", min_depth);
     printf("    max_depth: %f\n", max_depth);
-    printf("      sigma_spatial: %f\n", sigma_spatial);
-    printf("      sigma_color: %f\n", sigma_color);
+    printf("sigma_spatial: %f\n", sigma_spatial);
+    printf("  sigma_color: %f\n", sigma_color);
     printf("        alpha: %f\n", alpha);
     printf("      tau_col: %f\n", tau_col);
     printf("     tau_grad: %f\n", tau_grad);
@@ -553,6 +559,12 @@ public:
     checkCudaErrors(cudaMallocManaged((void **)&curand_map_, sizeof(curandState) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&plane_, sizeof(PlaneState) * width_ * height_));
   }
+
+  void Allocate(int n) 
+  {
+    checkCudaErrors(cudaMallocManaged((void **)&cost_volume_, sizeof(float) * width_ * height_ * n));
+  }
+
   ~RefViewType()
   {
     DestroyTextureObject(tex_, arr_);
@@ -561,11 +573,13 @@ public:
     checkCudaErrors(cudaFree(curand_map_));
     checkCudaErrors(cudaFree(plane_));
     checkCudaErrors(cudaFree(cost_map_));
+    checkCudaErrors(cudaFree(cost_volume_));
     CallSafeDelete(params_);
   }
   float* depth_map_;
   float* normal_map_;
   float* cost_map_;
+  float* cost_volume_;
   curandState* curand_map_;
   PlaneState* plane_;
 
@@ -596,7 +610,7 @@ public:
 
   void Match(cv::Mat &depth, cv::Mat &normal);
 
-  void Match();
+  void Match(int size);
 
   PatchMatchOptions *options_;
   int image_size_;

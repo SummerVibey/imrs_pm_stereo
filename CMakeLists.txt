@@ -117,6 +117,12 @@ target_link_libraries(2vs_texture_test
     PatchMatchStereoCuda
     ${THIRD_PARTY_LIBS})
 
+cuda_add_executable(mvs_test 
+    PatchMatchStereo/mvs_test.cpp)
+target_link_libraries(mvs_test
+    PatchMatchStereoCuda
+    ${THIRD_PARTY_LIBS})
+
 # cuda_add_executable(dtu_demo 
 #     PatchMatchStereo/dtu_demo.cpp)
 # target_link_libraries(dtu_demo

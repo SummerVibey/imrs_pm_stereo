@@ -268,6 +268,7 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/PatchMatchStereo.dir/DependInfo.cmake"
   "CMakeFiles/patch_match_demo.dir/DependInfo.cmake"
   "CMakeFiles/stereo_texture_test.dir/DependInfo.cmake"
+  "CMakeFiles/mvs_test.dir/DependInfo.cmake"
   "CMakeFiles/stereo_cuda_test.dir/DependInfo.cmake"
   "CMakeFiles/mvs_texture_test.dir/DependInfo.cmake"
   )

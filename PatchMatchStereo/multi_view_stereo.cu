@@ -35,6 +35,17 @@ __device__ __forceinline__ void Vec3AddVec3(const float vec1[9], const float vec
   result[2] = vec1[2] + vec2[2];
 }
 
+__device__ __forceinline__ void Sort(float *arr, int len)
+{
+  int j;
+  for (int i = 1; i < len; i++) {
+    float tmp = arr[i];
+    for (j = i; j >= 1 && tmp < arr[j-1]; j--)
+      arr[j] = arr[j-1];
+    arr[j] = tmp;
+  }
+}
+
 __device__ __forceinline__ void ComputeRelativePose(
   const float R1[9], const float t1[3], // ref pose
   const float R2[9], const float t2[3], // src pose 
@@ -430,7 +441,7 @@ __device__ __forceinline__ float ComputePMCost(
   return (1 - options->alpha) * dc + options->alpha * dg;
 }
 
-__device__ __forceinline__ float ComputePMCostRegion(
+__device__ __forceinline__ float ComputePMCostRegionBase(
   RefViewType *view_ref, 
   ViewType *view_src,
   const int px, const int py, 
@@ -477,6 +488,50 @@ __device__ __forceinline__ float ComputePMCostRegion(
   return cost;
 }
 
+__device__ __forceinline__ float ComputePMCostRegion(
+  RefViewType *view_ref, 
+  ViewType *view_src,
+  const int px, const int py, 
+  const float depth, const float normal[3], 
+  const PatchMatchOptions *options, 
+  int height, int width
+)
+{
+
+  const int pat = options->patch_size / 2;
+  float ref_color_center = color(view_ref->tex_, px, py);
+
+  float cost = 0.0f;
+  // for(int idx = 0; idx < src_size; ++idx) {
+  float Hsr[9];
+  GetHomography(
+    view_ref->params_->K_, 
+    view_src->params_->K_, 
+    view_ref->params_->R_,
+    view_src->params_->R_,
+    view_ref->params_->t_,
+    view_src->params_->t_,
+    px, py, depth, normal, Hsr);
+
+  for (int r = -pat; r <= pat; r+=1) {
+    const int qy = py + r;
+    for (int c = -pat; c <= pat; c+=1) {
+      const int qx = px + c;
+
+      float ref_color = color(view_ref->tex_, qx, qy);
+      const float weight = BilateralWeight(px - qx, py - qy, ref_color_center - ref_color, options->sigma_spatial, options->sigma_color);
+
+      // float qsx, qsy;
+      float qsx, qsy;
+      TransformView(Hsr, qx, qy, qsx, qsy);
+      cost += weight * ComputePMCost(view_ref->tex_, view_src->tex_, qx, qy, qsx, qsy, options, height, width);
+    }
+  }
+
+  return cost;
+}
+
+
 __device__ __forceinline__ float ComputeBilateralNCC(
   RefViewType *view_ref, 
   ViewType *view_src,
@@ -486,6 +541,10 @@ __device__ __forceinline__ float ComputeBilateralNCC(
   int height, int width
 )
 {
+
+  const float kMinVar = 1e-5f;
+  const float kMaxCost = 2.0f;
+
   const cudaTextureObject_t &ref_image = view_ref->tex_;
   const cudaTextureObject_t &src_image = view_src->tex_;
 
@@ -497,6 +556,13 @@ __device__ __forceinline__ float ComputeBilateralNCC(
                     view_ref->params_->t_,
                     view_src->params_->t_,
                     pcx, pcy, depth, normal, Hsr);
+  // Hsr[0] = 1; Hsr[1] = 0; Hsr[2] = 0;
+  // Hsr[3] = 0; Hsr[4] = 1; Hsr[5] = 0;
+  // Hsr[6] = 0; Hsr[7] = 0; Hsr[8] = 1;
+  float qcx, qcy;
+  TransformView(Hsr, pcx, pcy, qcx, qcy);
+  if(qcx < 0 || qcx > width - 1 || qcy < 0 || qcy > height - 1) 
+    return kMaxCost;
 
   const int window_radius = options->patch_size / 2;
   const float ref_center_color = color(ref_image, pcx, pcy);
@@ -516,6 +582,8 @@ __device__ __forceinline__ float ComputeBilateralNCC(
       px = pcx + x_bias;
       py = pcy + y_bias;
       TransformView(Hsr, px, py, qx, qy);
+      // qx = px;
+      // qy = py;
 
       const float ref_color = color(ref_image, px, py);
       const float src_color = color(src_image, qx, qy);
@@ -547,19 +615,59 @@ __device__ __forceinline__ float ComputeBilateralNCC(
 
   // Based on Jensen's Inequality for convex functions, the variance
   // should always be larger than 0. Do not make this threshold smaller.
-  const float kMinVar = 1e-5f;
-  const float kMaxCost = 2.0f;
-  if (ref_color_var < kMinVar || src_color_var < kMinVar) {
-    return kMaxCost;
-  } else {
+  // if (ref_color_var < kMinVar || src_color_var < kMinVar) {
+  //   return kMaxCost;
+  // } else {
     const float src_ref_color_covar =
         src_ref_color_sum - ref_color_sum * src_color_sum;
     const float src_ref_color_var = sqrt(ref_color_var * src_color_var);
     return max(0.0f,
                 min(kMaxCost, 1.0f - src_ref_color_covar / src_ref_color_var));
-  }
+  // }
 }
 
+__device__ __forceinline__ float ComputeMultiViewPMCost(
+  RefViewType *view_ref, 
+  ViewType **view_src,
+  int src_size,
+  const int pcx, const int pcy, 
+  const float depth, const float normal[3],
+  const PatchMatchOptions *options, 
+  int height, int width
+)
+{
+  int center = pcx + pcy * width;
+  float cost = 0.0f;
+  for(int i = 0; i < src_size; ++i) {
+    view_ref->cost_volume_[center * src_size + i] 
+      = ComputePMCostRegion(view_ref, view_src[i], pcx, pcy, depth, normal, options, height, width);
+    cost += view_ref->cost_volume_[center * src_size + i];
+  }
+  return cost / src_size;
+}
+
+__device__ __forceinline__ float ComputeMultiViewPhotoConsistency(
+  RefViewType *view_ref, 
+  ViewType **view_src,
+  int src_size,
+  const int pcx, const int pcy, 
+  const float depth, const float normal[3],
+  const PatchMatchOptions *options, 
+  int height, int width
+)
+{
+  int center = pcx + pcy * width;
+  float cost = 0.0f;
+  for(int i = 0; i < src_size; ++i) {
+    view_ref->cost_volume_[center * src_size + i] 
+      = ComputeBilateralNCC(view_ref, view_src[i], pcx, pcy, depth, normal, options, height, width);
+    cost += view_ref->cost_volume_[center * src_size + i];
+  }
+  // float *arr = &view_ref->cost_volume_[center * src_size];
+  // Sort(arr, src_size);
+  // return (arr[0] + arr[1] + arr[2]) / 3.0f;
+  return cost / src_size;
+}
 
 
 __device__ __forceinline__ float ComputePhotoConsistencyCost(
@@ -732,7 +840,7 @@ __device__ __forceinline__ void PropagateSpatialBase(
 
   // float cost_nb = ComputePhotoConsistencyCost(
   //   view_ref->tex_, view_src->tex_, x, y, Hsr, idp, normal[0], normal[1], normal[2], options);
-  float cost_nb = ComputePMCostRegion(view_ref, view_src, x, y, plane_nb.idp_, plane_nb.nx_, plane_nb.ny_, plane_nb.nz_, options, height, width);
+  float cost_nb = ComputePMCostRegionBase(view_ref, view_src, x, y, plane_nb.idp_, plane_nb.nx_, plane_nb.ny_, plane_nb.nz_, options, height, width);
 
   // printf("Neighbor State: %f, %f, %f, Neighbor Cost: %f\n", plane_nb.a, plane_nb.b, plane_nb.c, cost_nb);
   if(cost_nb < cost_local) {
@@ -792,7 +900,7 @@ __device__ __forceinline__ void PropagateSpatialBase(
 //     // float cost_new = ComputePhotoConsistencyCost(
 //     //     view_ref->tex_, view_src->tex_, x, y, Hsr, idp_new, norm_new[0], norm_new[1], norm_new[2], options);
 //     // printf("New State: %f, %f, %f, New Cost: %f\n", plane_new->a, plane_new->b, plane_new->c, cost_new);
-//     float cost_new = ComputePMCostRegion(view_ref, view_src, x, y, idp_new, norm_new[0], norm_new[1], norm_new[2], options, height, width);
+//     float cost_new = ComputePMCostRegionBase(view_ref, view_src, x, y, idp_new, norm_new[0], norm_new[1], norm_new[2], options, height, width);
 //     if(cost_new < cost_local) {
 //       cost_local = cost_new;
 //       plane_local.idp_ = idp_new;
@@ -891,7 +999,7 @@ __device__ __forceinline__ void RefinePlaneBase(
 
     // float cost_new = ComputePhotoConsistencyCost(
       // view_ref->tex_, view_src->tex_, x, y, Hsr, idp_new, norm_new.x, norm_new.y, norm_new.z, options);
-    float cost_new = ComputePMCostRegion(view_ref, view_src, x, y, idp_new, norm_new.x, norm_new.y, norm_new.z, options, height, width);
+    float cost_new = ComputePMCostRegionBase(view_ref, view_src, x, y, idp_new, norm_new.x, norm_new.y, norm_new.z, options, height, width);
     // printf("New State: %f, %f, %f, New Cost: %f\n", plane_new->a, plane_new->b, plane_new->c, cost_new);
     if(cost_new < cost_local) {
       cost_local = cost_new;
@@ -990,7 +1098,7 @@ __global__ void CostInit(
   // if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
   // int center = x + y * width;
   // const PlaneState& plane_local = view_ref->plane_[center];
-  // view_ref->cost_map_[center] = ComputePMCostRegion(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
+  // view_ref->cost_map_[center] = ComputePMCostRegionBase(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
 
   // using ncc cost
   int x = threadIdx.x + blockIdx.x * blockDim.x; 
@@ -999,7 +1107,7 @@ __global__ void CostInit(
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
   int center = x + y * width;
   const PlaneState& plane_local = view_ref->plane_[center];
-  view_ref->cost_map_[center] = ComputePMCostRegion(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
+  view_ref->cost_map_[center] = ComputePMCostRegionBase(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
   // float Hsr[9];
   // float normal[3] = {plane_local.nx_, plane_local.ny_, plane_local.nz_};
   // ComputeHomography(
@@ -1029,7 +1137,7 @@ __global__ void CostInitInOrder(
       int center = x + y * width;
       const PlaneState& plane_local = view_ref->plane_[center];
       printf("x, y: %d, %d\n", x, y);
-      view_ref->cost_map_[center] = ComputePMCostRegion(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
+      view_ref->cost_map_[center] = ComputePMCostRegionBase(view_ref, view_src, x, y, plane_local.idp_, plane_local.nx_, plane_local.ny_, plane_local.nz_, options, height, width);
     }
   }
 }
@@ -1273,16 +1381,39 @@ __global__ void CostInitKernel(
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
 
   int center = x + y * width;
-  cost_map[center] = ComputeBilateralNCC(view_ref, view_src, x, y, depth_map[center], &normal_map[center*3], options, height, width);
+  cost_map[center] = ComputePMCostRegion(view_ref, view_src, x, y, depth_map[center], &normal_map[center*3], options, height, width);
+  // cost_map[center] = ComputeBilateralNCC(view_ref, view_src, x, y, depth_map[center], &normal_map[center*3], options, height, width);
+  __syncthreads();
+}
+
+__global__ void MultiViewCostInitKernel(
+  RefViewType *view_ref,
+  ViewType **view_src,
+  int src_size,
+  const float *depth_map,
+  const float *normal_map,
+  float *cost_volume,
+  float *cost_map,
+  const PatchMatchOptions *options,
+  int height, int width
+)
+{
+  int x = threadIdx.x + blockIdx.x * blockDim.x; 
+  int y = threadIdx.y + blockIdx.y * blockDim.y; 
+  if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
+
+  int center = x + y * width;
+  // cost_map[center] = \
+  //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_map[center], &normal_map[center*3], options, height, width);
+  cost_map[center] = \
+    ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_map[center], &normal_map[center*3], options, height, width);
   __syncthreads();
 }
 
 __device__ __forceinline__ void PropagateSpatial(
   RefViewType *view_ref,
-  ViewType *view_src,
-  float *depth_map,
-  float *normal_map,
-  float *cost_map, 
+  ViewType **view_src,
+  int src_size,
   int x, int y, int x_bias, int y_bias,
   const PatchMatchOptions *options,
   int height, 
@@ -1296,14 +1427,18 @@ __device__ __forceinline__ void PropagateSpatial(
 
   const int center_lc = x + y * width;
   const int center_nb = x_nb + y_nb * width;
-  float &depth_lc = depth_map[center_lc];
-  float *normal_lc = &normal_map[center_lc*3];
-  float &cost_lc = cost_map[center_lc];
+  float &depth_lc = view_ref->depth_map_[center_lc];
+  float *normal_lc = &view_ref->normal_map_[center_lc*3];
+  float &cost_lc = view_ref->cost_map_[center_lc];
 
-  const float depth_nb = depth_map[center_nb];
-  const float *normal_nb = &normal_map[center_nb*3];
-  const float cost_nb = ComputeBilateralNCC(view_ref, view_src, x, y, depth_nb, normal_nb, options, height, width);
-
+  const float depth_nb = view_ref->depth_map_[center_nb];
+  const float *normal_nb = &view_ref->normal_map_[center_nb*3];
+  // const float cost_nb = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_nb, normal_nb, options, height, width);
+  const float cost_nb = \
+    ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_nb, normal_nb, options, height, width);
+  // const float cost_nb = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_nb, normal_nb, options, height, width);
+  // const float cost_nb = \
+  //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_nb, normal_nb, options, height, width);
   if(cost_nb < cost_lc) {
     cost_lc = cost_nb;
     depth_lc = depth_nb;
@@ -1316,11 +1451,8 @@ __device__ __forceinline__ void PropagateSpatial(
 
 __device__ __forceinline__ void RefinePlane(
   RefViewType *view_ref,
-  ViewType *view_src,
-  float *depth_map, 
-  float *normal_map,
-  float *cost_map, 
-  curandState *curand_map,
+  ViewType **view_src,
+  int src_size,
   int x, int y,
   const PatchMatchOptions *options,
   int height, 
@@ -1331,9 +1463,9 @@ __device__ __forceinline__ void RefinePlane(
 	const float min_depth = static_cast<float>(options->min_depth);
 
   const int center_lc = x + y * width;
-  float &depth_lc = depth_map[center_lc];
-  float *normal_lc = &normal_map[center_lc*3];
-  float &cost_lc = cost_map[center_lc];
+  float &depth_lc = view_ref->depth_map_[center_lc];
+  float *normal_lc = &view_ref->normal_map_[center_lc*3];
+  float &cost_lc = view_ref->cost_map_[center_lc];
 
 	float depth_update = (max_depth - min_depth) / 2.0f;
 	float normal_update = 1.0f;
@@ -1341,14 +1473,14 @@ __device__ __forceinline__ void RefinePlane(
 
   // int trial_num = 0;
 	while (depth_update > stop_threshold) {
-    float depth_rd = CurandBetween(&curand_map[center_lc], -1.f, 1.f) * depth_update;
+    float depth_rd = CurandBetween(&view_ref->curand_map_[center_lc], -1.f, 1.f) * depth_update;
     float normal_rd[3]; 
-    GenerateRandomNormal(normal_rd, &curand_map[center_lc], x, y, view_ref->params_->K_);
+    GenerateRandomNormal(normal_rd, &view_ref->curand_map_[center_lc], x, y, view_ref->params_->K_);
     
 
-    float depth_pt = PerturbDepth(depth_lc, depth_update, &curand_map[center_lc], min_depth, max_depth);
+    float depth_pt = PerturbDepth(depth_lc, depth_update, &view_ref->curand_map_[center_lc], min_depth, max_depth);
     float normal_pt[3];
-    PerturbNormal(normal_lc, normal_update, &curand_map[center_lc], normal_pt, x, y, view_ref->params_->K_);
+    PerturbNormal(normal_lc, normal_update, &view_ref->curand_map_[center_lc], normal_pt, x, y, view_ref->params_->K_);
     
 		if (depth_pt  < min_depth || depth_pt  > max_depth) {
 			depth_update /= 2.0f;
@@ -1358,14 +1490,26 @@ __device__ __forceinline__ void RefinePlane(
     
     float cost_new = 0.0f;
     // perturb depth and original normal
-    cost_new = ComputeBilateralNCC(view_ref, view_src, x, y, depth_pt, normal_lc, options, height, width);
+    // cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_pt, normal_lc, options, height, width);
+    cost_new = \
+      ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_pt, normal_lc, options, height, width);
+    // cost_new = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_pt, normal_lc, options, height, width);
+    // cost_new = \
+    //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_pt, normal_lc, options, height, width);
+
     if(cost_new < cost_lc) {
       cost_lc = cost_new;
       depth_lc = depth_pt;
     }
 
     // original depth and perturb normal
-    cost_new = ComputeBilateralNCC(view_ref, view_src, x, y, depth_lc, normal_pt, options, height, width);
+    // cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_lc, normal_pt, options, height, width);
+    cost_new = \
+      ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_lc, normal_pt, options, height, width);
+    // cost_new = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_lc, normal_pt, options, height, width);
+    // cost_new = \
+    //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_lc, normal_pt, options, height, width);
+
     if(cost_new < cost_lc) {
       cost_lc = cost_new;
       normal_lc[0] = normal_pt[0];
@@ -1374,7 +1518,14 @@ __device__ __forceinline__ void RefinePlane(
     }
 
     // perturb depth and perturb normal
-    cost_new = ComputeBilateralNCC(view_ref, view_src, x, y, depth_pt, normal_pt, options, height, width);
+    // cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_pt, normal_pt, options, height, width);
+    cost_new = \
+      ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_pt, normal_pt, options, height, width);
+   
+    // cost_new = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_pt, normal_pt, options, height, width);
+    // cost_new = \
+    //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_pt, normal_pt, options, height, width);
+    
     if(cost_new < cost_lc) {
       cost_lc = cost_new;
       depth_lc = depth_pt;
@@ -1390,11 +1541,8 @@ __device__ __forceinline__ void RefinePlane(
 
 __device__ __forceinline__ void Propagate(
   RefViewType *view_ref,
-  ViewType *view_src,
-  float *depth_map,
-  float *normal_map,
-  float *cost_map, 
-  curandState *curand_map,
+  ViewType **view_src,
+  int src_size,
   int x, int y,
   const PatchMatchOptions *options,
   int height, 
@@ -1409,21 +1557,18 @@ __device__ __forceinline__ void Propagate(
   
 
   for(int i = 0; i < 8; ++i) {
-    PropagateSpatial(view_ref, view_src, depth_map, normal_map, cost_map, x, y, x_bias[i], y_bias[i], options, height, width);
+    PropagateSpatial(view_ref, view_src, src_size, x, y, x_bias[i], y_bias[i], options, height, width);
     __syncthreads();
   }
 
-  RefinePlane(view_ref, view_src, depth_map, normal_map, cost_map, curand_map, x, y, options, height, width);
+  RefinePlane(view_ref, view_src, src_size, x, y, options, height, width);
   __syncthreads();
 }
 
 __global__ void PropagateBlack(
   RefViewType *view_ref,
-  ViewType *view_src,
-  float *depth_map,
-  float *normal_map,
-  float *cost_map, 
-  curandState *curand_map,
+  ViewType **view_src,
+  int src_size,
   const PatchMatchOptions *options,
   int height, 
   int width
@@ -1435,16 +1580,13 @@ __global__ void PropagateBlack(
   else y = y * 2 + 1;
 
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
-  Propagate(view_ref, view_src, depth_map, normal_map, cost_map, curand_map, x, y, options, height, width);
+  Propagate(view_ref, view_src, src_size, x, y, options, height, width);
 }
 
 __global__ void PropagateRed(
   RefViewType *view_ref,
-  ViewType *view_src,
-  float *depth_map,
-  float *normal_map,
-  float *cost_map, 
-  curandState *curand_map,
+  ViewType **view_src,
+  int src_size,
   const PatchMatchOptions *options,
   int height, 
   int width
@@ -1456,7 +1598,7 @@ __global__ void PropagateRed(
   else y = y * 2;
 
   if(x < 0 || x > width - 1 || y < 0 || y > height - 1) return;
-  Propagate(view_ref, view_src, depth_map, normal_map, cost_map, curand_map, x, y, options, height, width);
+  Propagate(view_ref, view_src, src_size, x, y, options, height, width);
 }
 
 
@@ -1539,7 +1681,7 @@ void MultiViewStereoMatcherCuda::Match(cv::Mat &depth, cv::Mat &normal)
 
 }
 
-void MultiViewStereoMatcherCuda::Match()
+void MultiViewStereoMatcherCuda::Match(int size)
 {
   int block_size_x = 32;
   int block_size_y = 16;
@@ -1560,21 +1702,23 @@ void MultiViewStereoMatcherCuda::Match()
   RandomNormalKernel <<<grid_size, block_size>>>(ref_->normal_map_, ref_->curand_map_, height, width, ref_->params_->K_);
   cudaDeviceSynchronize();
 
-  CostInitKernel <<<grid_size, block_size>>>(ref_, src_[0], ref_->depth_map_, ref_->normal_map_, ref_->cost_map_, options_, height, width);
+  MultiViewCostInitKernel <<<grid_size, block_size>>>(ref_, src_, size, ref_->depth_map_, ref_->normal_map_, ref_->cost_volume_, ref_->cost_map_, options_, height, width);
+  // CostInitKernel <<<grid_size, block_size>>>(ref_, src_[0], ref_->depth_map_, ref_->normal_map_, ref_->cost_map_, options_, height, width);
   cudaDeviceSynchronize();
 
 
 
   for(int iter = 0; iter < 8; ++iter) {
-    PropagateRed<<<grid_size, block_size>>>(ref_, src_[0], ref_->depth_map_, ref_->normal_map_, ref_->cost_map_, ref_->curand_map_, options_, height, width);
+    PropagateRed<<<grid_size, block_size>>>(ref_, src_, size, options_, height, width);
     cudaDeviceSynchronize();
-    PropagateBlack<<<grid_size, block_size>>>(ref_, src_[0], ref_->depth_map_, ref_->normal_map_, ref_->cost_map_, ref_->curand_map_, options_, height, width);
+    PropagateBlack<<<grid_size, block_size>>>(ref_, src_, size, options_, height, width);
     cudaDeviceSynchronize();
     RenderDepthAndNormalMap(ref_->depth_map_, ref_->normal_map_, height, width);
   }
   
   RenderDepthAndNormalMap(ref_->depth_map_, ref_->normal_map_, height, width);
   ShowCostAndHistogram(ref_->cost_map_, height, width);
+  // ShowCostSliceAndHistogram(ref_->cost_volume_, size, 1, height, width);
   cudaDeviceSynchronize();
 
   // float *normal_map,

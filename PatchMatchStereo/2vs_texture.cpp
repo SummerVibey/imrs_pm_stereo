@@ -125,7 +125,7 @@ if (argc < 3) {
   // int ref_index = 6;
   // int src_size = 2;
 
-  PatchMatchOptions *options = new PatchMatchOptions();
+  PatchMatchOptions *options = new PatchMatchOptions(0.1f, 60.0f);
   options->sigma_color = 10.0f;
   options->sigma_spatial = 15.0f;
   options->patch_size = 15;

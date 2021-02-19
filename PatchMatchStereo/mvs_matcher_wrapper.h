@@ -36,24 +36,28 @@ public:
   ~MVSMatcherWrapper() {  ReleaseAll(); delete matcher_; }
 
   void ReleaseAll() {
-    SafeReleaseMatBuffer(img_ref_);img_ref_.clear();
-    SafeReleaseMatBuffer(Kref_);Kref_.clear();
+    // SafeReleaseMatBuffer(img_ref_);img_ref_.clear();
+    // SafeReleaseMatBuffer(Kref_);Kref_.clear();
+    SafeReleaseMat(img_ref_);
+    SafeReleaseMat(Kref_);
     SafeReleaseMat(Rrw_);
     SafeReleaseMat(trw_);
     
-    SafeReleaseMatDoubleBuffer(imgs_src_);imgs_src_.clear();
-    SafeReleaseMatDoubleBuffer(Ksrcs_);Ksrcs_.clear();
+    // SafeReleaseMatDoubleBuffer(imgs_src_);imgs_src_.clear();
+    // SafeReleaseMatDoubleBuffer(Ksrcs_);Ksrcs_.clear();
+    SafeReleaseMatBuffer(imgs_src_);imgs_src_.clear();
+    SafeReleaseMatBuffer(Ksrcs_);Ksrcs_.clear();
     SafeReleaseMatBuffer(Rsws_);Rsws_.clear();
     SafeReleaseMatBuffer(tsws_);tsws_.clear();
   }
 
-  void ReleaseLevel(int level) {
-    SafeReleaseMat(img_ref_[level]);
-    SafeReleaseMat(Kref_[level]);
+  // void ReleaseLevel(int level) {
+  //   SafeReleaseMat(img_ref_[level]);
+  //   SafeReleaseMat(Kref_[level]);
 
-    SafeReleaseMatBuffer(imgs_src_[level]);
-    SafeReleaseMatBuffer(Ksrcs_[level]);
-  }
+  //   SafeReleaseMatBuffer(imgs_src_[level]);
+  //   SafeReleaseMatBuffer(Ksrcs_[level]);
+  // }
 
   void SetReferenceView(const cv::Mat& img, const cv::Mat_<float> &K, const cv::Mat_<float> &Rcw, const cv::Mat_<float> &tcw);
 
@@ -88,16 +92,20 @@ public:
   float height_scale_;
 
   // host buffer
-  std::vector<cv::Mat> img_ref_;
-  std::vector<cv::Mat> Kref_;
-  std::vector<cv::Mat> Pref_;
+  cv::Mat img_ref_;
+  cv::Mat Kref_;
+  cv::Mat Pref_;
   cv::Mat Rrw_;
   cv::Mat trw_;
   
 
-  std::vector<std::vector<cv::Mat>> imgs_src_;
-  std::vector<std::vector<cv::Mat>> Ksrcs_;
-  std::vector<std::vector<cv::Mat>> Psrcs_;
+  // std::vector<std::vector<cv::Mat>> imgs_src_;
+  // std::vector<std::vector<cv::Mat>> Ksrcs_;
+  // std::vector<std::vector<cv::Mat>> Psrcs_;
+
+  std::vector<cv::Mat> imgs_src_;
+  std::vector<cv::Mat> Ksrcs_;
+  std::vector<cv::Mat> Psrcs_;
   std::vector<cv::Mat> Rsws_;
   std::vector<cv::Mat> tsws_;
   

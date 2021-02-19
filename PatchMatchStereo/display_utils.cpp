@@ -159,7 +159,27 @@ void ShowCostAndHistogram(float *cost, int height, int width)
   while(1) {
     if(cv::waitKey(0) == 'q') break;
   }
+}
 
+void ShowCostSliceAndHistogram(float *cost_volume, int src_size, int channel, int height, int width)
+{
+  cv::Mat cost_img(height, width, CV_32F, cv::Scalar(0));
+  for(int i = 0; i < height; ++i) {
+    for(int j = 0; j < width; ++j) {
+      cost_img.ptr<float>(i)[j] = (float)cost_volume[(i*width+j)*src_size + channel];
+    }
+  }
+  cv::Mat cost_display;
+  ConvertCostForDisplay(cost_img, cost_display);
+  cv::Mat hist_display;
+  ComputeHistForDisplay(cost_img, hist_display);
+  // cv::namedWindow("cost");
+  // cv::namedWindow("hist");
+  cv::imshow("cost", cost_display);
+  cv::imshow("hist", hist_display);
+  while(1) {
+    if(cv::waitKey(0) == 'q') break;
+  }
 }
 
 void RenderDepthAndNormalMap(const float *depth_data, const float *normal_data, const int height, const int width)

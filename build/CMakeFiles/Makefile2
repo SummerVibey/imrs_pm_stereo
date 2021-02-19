@@ -177,7 +177,7 @@ clean: CMakeFiles/PatchMatchStereo.dir/clean
 CMakeFiles/patch_match_demo.dir/all: CMakeFiles/PatchMatchStereo.dir/all
 	$(MAKE) -f CMakeFiles/patch_match_demo.dir/build.make CMakeFiles/patch_match_demo.dir/depend
 	$(MAKE) -f CMakeFiles/patch_match_demo.dir/build.make CMakeFiles/patch_match_demo.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=18,19 "Built target patch_match_demo"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=20,21 "Built target patch_match_demo"
 .PHONY : CMakeFiles/patch_match_demo.dir/all
 
 # Include target in all.
@@ -214,7 +214,7 @@ clean: CMakeFiles/patch_match_demo.dir/clean
 CMakeFiles/stereo_texture_test.dir/all: CMakeFiles/PatchMatchStereoCuda.dir/all
 	$(MAKE) -f CMakeFiles/stereo_texture_test.dir/build.make CMakeFiles/stereo_texture_test.dir/depend
 	$(MAKE) -f CMakeFiles/stereo_texture_test.dir/build.make CMakeFiles/stereo_texture_test.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=22,23 "Built target stereo_texture_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=24,25 "Built target stereo_texture_test"
 .PHONY : CMakeFiles/stereo_texture_test.dir/all
 
 # Include target in all.
@@ -245,13 +245,50 @@ clean: CMakeFiles/stereo_texture_test.dir/clean
 .PHONY : clean
 
 #=============================================================================
+# Target rules for target CMakeFiles/mvs_test.dir
+
+# All Build rule for target.
+CMakeFiles/mvs_test.dir/all: CMakeFiles/PatchMatchStereoCuda.dir/all
+	$(MAKE) -f CMakeFiles/mvs_test.dir/build.make CMakeFiles/mvs_test.dir/depend
+	$(MAKE) -f CMakeFiles/mvs_test.dir/build.make CMakeFiles/mvs_test.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=16,17 "Built target mvs_test"
+.PHONY : CMakeFiles/mvs_test.dir/all
+
+# Include target in all.
+all: CMakeFiles/mvs_test.dir/all
+
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/mvs_test.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yons/code/imrs_pm_stereo/build/CMakeFiles 9
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/mvs_test.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yons/code/imrs_pm_stereo/build/CMakeFiles 0
+.PHONY : CMakeFiles/mvs_test.dir/rule
+
+# Convenience name for target.
+mvs_test: CMakeFiles/mvs_test.dir/rule
+
+.PHONY : mvs_test
+
+# clean rule for target.
+CMakeFiles/mvs_test.dir/clean:
+	$(MAKE) -f CMakeFiles/mvs_test.dir/build.make CMakeFiles/mvs_test.dir/clean
+.PHONY : CMakeFiles/mvs_test.dir/clean
+
+# clean rule for target.
+clean: CMakeFiles/mvs_test.dir/clean
+
+.PHONY : clean
+
+#=============================================================================
 # Target rules for target CMakeFiles/stereo_cuda_test.dir
 
 # All Build rule for target.
 CMakeFiles/stereo_cuda_test.dir/all: CMakeFiles/PatchMatchStereoCuda.dir/all
 	$(MAKE) -f CMakeFiles/stereo_cuda_test.dir/build.make CMakeFiles/stereo_cuda_test.dir/depend
 	$(MAKE) -f CMakeFiles/stereo_cuda_test.dir/build.make CMakeFiles/stereo_cuda_test.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=20,21 "Built target stereo_cuda_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=22,23 "Built target stereo_cuda_test"
 .PHONY : CMakeFiles/stereo_cuda_test.dir/all
 
 # Include target in all.
@@ -288,7 +325,7 @@ clean: CMakeFiles/stereo_cuda_test.dir/clean
 CMakeFiles/mvs_texture_test.dir/all: CMakeFiles/PatchMatchStereoCuda.dir/all
 	$(MAKE) -f CMakeFiles/mvs_texture_test.dir/build.make CMakeFiles/mvs_texture_test.dir/depend
 	$(MAKE) -f CMakeFiles/mvs_texture_test.dir/build.make CMakeFiles/mvs_texture_test.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=16,17 "Built target mvs_texture_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=18,19 "Built target mvs_texture_test"
 .PHONY : CMakeFiles/mvs_texture_test.dir/all
 
 # Include target in all.

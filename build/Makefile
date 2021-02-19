@@ -176,6 +176,19 @@ stereo_texture_test/fast:
 .PHONY : stereo_texture_test/fast
 
 #=============================================================================
+# Target rules for targets named mvs_test
+
+# Build rule for target.
+mvs_test: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mvs_test
+.PHONY : mvs_test
+
+# fast build rule for target.
+mvs_test/fast:
+	$(MAKE) -f CMakeFiles/mvs_test.dir/build.make CMakeFiles/mvs_test.dir/build
+.PHONY : mvs_test/fast
+
+#=============================================================================
 # Target rules for targets named stereo_cuda_test
 
 # Build rule for target.
@@ -369,6 +382,33 @@ PatchMatchStereo/mvs_matcher_wrapper.cpp.s:
 	$(MAKE) -f CMakeFiles/PatchMatchStereoCuda.dir/build.make CMakeFiles/PatchMatchStereoCuda.dir/PatchMatchStereo/mvs_matcher_wrapper.cpp.s
 .PHONY : PatchMatchStereo/mvs_matcher_wrapper.cpp.s
 
+PatchMatchStereo/mvs_test.o: PatchMatchStereo/mvs_test.cpp.o
+
+.PHONY : PatchMatchStereo/mvs_test.o
+
+# target to build an object file
+PatchMatchStereo/mvs_test.cpp.o:
+	$(MAKE) -f CMakeFiles/mvs_test.dir/build.make CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.o
+.PHONY : PatchMatchStereo/mvs_test.cpp.o
+
+PatchMatchStereo/mvs_test.i: PatchMatchStereo/mvs_test.cpp.i
+
+.PHONY : PatchMatchStereo/mvs_test.i
+
+# target to preprocess a source file
+PatchMatchStereo/mvs_test.cpp.i:
+	$(MAKE) -f CMakeFiles/mvs_test.dir/build.make CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.i
+.PHONY : PatchMatchStereo/mvs_test.cpp.i
+
+PatchMatchStereo/mvs_test.s: PatchMatchStereo/mvs_test.cpp.s
+
+.PHONY : PatchMatchStereo/mvs_test.s
+
+# target to generate assembly for a file
+PatchMatchStereo/mvs_test.cpp.s:
+	$(MAKE) -f CMakeFiles/mvs_test.dir/build.make CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.s
+.PHONY : PatchMatchStereo/mvs_test.cpp.s
+
 PatchMatchStereo/mvs_texture.o: PatchMatchStereo/mvs_texture.cpp.o
 
 .PHONY : PatchMatchStereo/mvs_texture.o
@@ -544,6 +584,7 @@ help:
 	@echo "... PatchMatchStereo"
 	@echo "... patch_match_demo"
 	@echo "... stereo_texture_test"
+	@echo "... mvs_test"
 	@echo "... stereo_cuda_test"
 	@echo "... mvs_texture_test"
 	@echo "... PatchMatchStereo/2vs_texture.o"
@@ -564,6 +605,9 @@ help:
 	@echo "... PatchMatchStereo/mvs_matcher_wrapper.o"
 	@echo "... PatchMatchStereo/mvs_matcher_wrapper.i"
 	@echo "... PatchMatchStereo/mvs_matcher_wrapper.s"
+	@echo "... PatchMatchStereo/mvs_test.o"
+	@echo "... PatchMatchStereo/mvs_test.i"
+	@echo "... PatchMatchStereo/mvs_test.s"
 	@echo "... PatchMatchStereo/mvs_texture.o"
 	@echo "... PatchMatchStereo/mvs_texture.i"
 	@echo "... PatchMatchStereo/mvs_texture.s"
