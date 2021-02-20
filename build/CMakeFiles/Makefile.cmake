@@ -263,6 +263,8 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
+  "CMakeFiles/kitti_demo.dir/DependInfo.cmake"
+  "CMakeFiles/qsinghua_demo.dir/DependInfo.cmake"
   "CMakeFiles/2vs_texture_test.dir/DependInfo.cmake"
   "CMakeFiles/PatchMatchStereoCuda.dir/DependInfo.cmake"
   "CMakeFiles/PatchMatchStereo.dir/DependInfo.cmake"

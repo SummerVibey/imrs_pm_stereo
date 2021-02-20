@@ -83,13 +83,13 @@ struct PatchMatchOptions : public GlobalMalloc
 
 	PatchMatchOptions() : 
     min_disparity(0.0f), max_disparity(0.5f), min_depth(0.1f), max_depth(10.0f),
-    patch_size(35), step_size(2), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
+    patch_size(7), step_size(1), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
     tau_grad(2.0f), num_iters(3), is_check_lr(false), lrcheck_thres(0),
     is_fill_holes(false), is_fource_fpw(false), is_integer_disp(false) {}
 	
 	PatchMatchOptions(float _min_depth, float _max_depth) : 
     min_disparity(0.0f), max_disparity(0.5f), min_depth(_min_depth), max_depth(_max_depth),
-    patch_size(35), step_size(2), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
+    patch_size(7), step_size(1), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
     tau_grad(2.0f), num_iters(3), is_check_lr(false), lrcheck_thres(0),
     is_fill_holes(false), is_fource_fpw(false), is_integer_disp(false) {}
 
@@ -585,12 +585,12 @@ public:
 
 };
 
-class MultiViewStereoMatcherCuda : public GlobalMalloc
+class MVSMatcherCuda : public GlobalMalloc
 {
 public:
-  MultiViewStereoMatcherCuda() : options_(nullptr), image_size_(0), ref_(nullptr) {}
+  MVSMatcherCuda() : options_(nullptr), image_size_(0), ref_(nullptr) {}
 
-  MultiViewStereoMatcherCuda(PatchMatchOptions *options, int image_size)
+  MVSMatcherCuda(PatchMatchOptions *options, int image_size)
   : options_(options), image_size_(image_size), ref_(nullptr)
   {
   }
@@ -603,7 +603,7 @@ public:
     image_size_ = image_size;
   }
 
-  ~MultiViewStereoMatcherCuda() {
+  ~MVSMatcherCuda() {
     CallSafeDelete(ref_);
     CallSafeDeleteBuffer(src_, image_size_);
   }

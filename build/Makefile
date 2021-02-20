@@ -111,6 +111,32 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named kitti_demo
+
+# Build rule for target.
+kitti_demo: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 kitti_demo
+.PHONY : kitti_demo
+
+# fast build rule for target.
+kitti_demo/fast:
+	$(MAKE) -f CMakeFiles/kitti_demo.dir/build.make CMakeFiles/kitti_demo.dir/build
+.PHONY : kitti_demo/fast
+
+#=============================================================================
+# Target rules for targets named qsinghua_demo
+
+# Build rule for target.
+qsinghua_demo: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 qsinghua_demo
+.PHONY : qsinghua_demo
+
+# fast build rule for target.
+qsinghua_demo/fast:
+	$(MAKE) -f CMakeFiles/qsinghua_demo.dir/build.make CMakeFiles/qsinghua_demo.dir/build
+.PHONY : qsinghua_demo/fast
+
+#=============================================================================
 # Target rules for targets named 2vs_texture_test
 
 # Build rule for target.
@@ -328,6 +354,33 @@ PatchMatchStereo/display_utils.cpp.s:
 	$(MAKE) -f CMakeFiles/PatchMatchStereo.dir/build.make CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.s
 .PHONY : PatchMatchStereo/display_utils.cpp.s
 
+PatchMatchStereo/kitti_demo.o: PatchMatchStereo/kitti_demo.cpp.o
+
+.PHONY : PatchMatchStereo/kitti_demo.o
+
+# target to build an object file
+PatchMatchStereo/kitti_demo.cpp.o:
+	$(MAKE) -f CMakeFiles/kitti_demo.dir/build.make CMakeFiles/kitti_demo.dir/PatchMatchStereo/kitti_demo.cpp.o
+.PHONY : PatchMatchStereo/kitti_demo.cpp.o
+
+PatchMatchStereo/kitti_demo.i: PatchMatchStereo/kitti_demo.cpp.i
+
+.PHONY : PatchMatchStereo/kitti_demo.i
+
+# target to preprocess a source file
+PatchMatchStereo/kitti_demo.cpp.i:
+	$(MAKE) -f CMakeFiles/kitti_demo.dir/build.make CMakeFiles/kitti_demo.dir/PatchMatchStereo/kitti_demo.cpp.i
+.PHONY : PatchMatchStereo/kitti_demo.cpp.i
+
+PatchMatchStereo/kitti_demo.s: PatchMatchStereo/kitti_demo.cpp.s
+
+.PHONY : PatchMatchStereo/kitti_demo.s
+
+# target to generate assembly for a file
+PatchMatchStereo/kitti_demo.cpp.s:
+	$(MAKE) -f CMakeFiles/kitti_demo.dir/build.make CMakeFiles/kitti_demo.dir/PatchMatchStereo/kitti_demo.cpp.s
+.PHONY : PatchMatchStereo/kitti_demo.cpp.s
+
 PatchMatchStereo/main.o: PatchMatchStereo/main.cpp.o
 
 .PHONY : PatchMatchStereo/main.o
@@ -490,6 +543,33 @@ PatchMatchStereo/pms_util.cpp.s:
 	$(MAKE) -f CMakeFiles/PatchMatchStereo.dir/build.make CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/pms_util.cpp.s
 .PHONY : PatchMatchStereo/pms_util.cpp.s
 
+PatchMatchStereo/qsinghua_demo.o: PatchMatchStereo/qsinghua_demo.cpp.o
+
+.PHONY : PatchMatchStereo/qsinghua_demo.o
+
+# target to build an object file
+PatchMatchStereo/qsinghua_demo.cpp.o:
+	$(MAKE) -f CMakeFiles/qsinghua_demo.dir/build.make CMakeFiles/qsinghua_demo.dir/PatchMatchStereo/qsinghua_demo.cpp.o
+.PHONY : PatchMatchStereo/qsinghua_demo.cpp.o
+
+PatchMatchStereo/qsinghua_demo.i: PatchMatchStereo/qsinghua_demo.cpp.i
+
+.PHONY : PatchMatchStereo/qsinghua_demo.i
+
+# target to preprocess a source file
+PatchMatchStereo/qsinghua_demo.cpp.i:
+	$(MAKE) -f CMakeFiles/qsinghua_demo.dir/build.make CMakeFiles/qsinghua_demo.dir/PatchMatchStereo/qsinghua_demo.cpp.i
+.PHONY : PatchMatchStereo/qsinghua_demo.cpp.i
+
+PatchMatchStereo/qsinghua_demo.s: PatchMatchStereo/qsinghua_demo.cpp.s
+
+.PHONY : PatchMatchStereo/qsinghua_demo.s
+
+# target to generate assembly for a file
+PatchMatchStereo/qsinghua_demo.cpp.s:
+	$(MAKE) -f CMakeFiles/qsinghua_demo.dir/build.make CMakeFiles/qsinghua_demo.dir/PatchMatchStereo/qsinghua_demo.cpp.s
+.PHONY : PatchMatchStereo/qsinghua_demo.cpp.s
+
 PatchMatchStereo/stereo_cuda.o: PatchMatchStereo/stereo_cuda.cpp.o
 
 .PHONY : PatchMatchStereo/stereo_cuda.o
@@ -579,6 +659,8 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... kitti_demo"
+	@echo "... qsinghua_demo"
 	@echo "... 2vs_texture_test"
 	@echo "... PatchMatchStereoCuda"
 	@echo "... PatchMatchStereo"
@@ -599,6 +681,9 @@ help:
 	@echo "... PatchMatchStereo/display_utils.o"
 	@echo "... PatchMatchStereo/display_utils.i"
 	@echo "... PatchMatchStereo/display_utils.s"
+	@echo "... PatchMatchStereo/kitti_demo.o"
+	@echo "... PatchMatchStereo/kitti_demo.i"
+	@echo "... PatchMatchStereo/kitti_demo.s"
 	@echo "... PatchMatchStereo/main.o"
 	@echo "... PatchMatchStereo/main.i"
 	@echo "... PatchMatchStereo/main.s"
@@ -617,6 +702,9 @@ help:
 	@echo "... PatchMatchStereo/pms_util.o"
 	@echo "... PatchMatchStereo/pms_util.i"
 	@echo "... PatchMatchStereo/pms_util.s"
+	@echo "... PatchMatchStereo/qsinghua_demo.o"
+	@echo "... PatchMatchStereo/qsinghua_demo.i"
+	@echo "... PatchMatchStereo/qsinghua_demo.s"
 	@echo "... PatchMatchStereo/stereo_cuda.o"
 	@echo "... PatchMatchStereo/stereo_cuda.i"
 	@echo "... PatchMatchStereo/stereo_cuda.s"

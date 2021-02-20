@@ -123,6 +123,18 @@ target_link_libraries(mvs_test
     PatchMatchStereoCuda
     ${THIRD_PARTY_LIBS})
 
+cuda_add_executable(qsinghua_demo 
+    PatchMatchStereo/qsinghua_demo.cpp)
+target_link_libraries(qsinghua_demo
+    PatchMatchStereoCuda
+    ${THIRD_PARTY_LIBS})
+
+cuda_add_executable(kitti_demo 
+    PatchMatchStereo/kitti_demo.cpp)
+target_link_libraries(kitti_demo
+    PatchMatchStereoCuda
+    ${THIRD_PARTY_LIBS})
+
 # cuda_add_executable(dtu_demo 
 #     PatchMatchStereo/dtu_demo.cpp)
 # target_link_libraries(dtu_demo

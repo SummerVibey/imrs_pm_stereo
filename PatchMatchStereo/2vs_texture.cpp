@@ -125,11 +125,14 @@ if (argc < 3) {
   // int ref_index = 6;
   // int src_size = 2;
 
-  PatchMatchOptions *options = new PatchMatchOptions(0.1f, 60.0f);
-  options->sigma_color = 10.0f;
-  options->sigma_spatial = 15.0f;
-  options->patch_size = 15;
-  options->max_disparity = 0.4f;
+  PatchMatchOptions *options = new PatchMatchOptions(1.0f, 8.0f);
+  options->sigma_color = 15.0f;
+  options->sigma_spatial = 20.0f;
+  options->patch_size = 35;
+  options->step_size = 1;
+  // options->sigma_color = 0.2f;
+  // options->sigma_spatial = 3.0f;
+
   MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options, height, width);
   mvs_matcher->SetReferenceView(img_left, K, R1, t1);
   mvs_matcher->AddSourceView(img_right, K, R2, t2);

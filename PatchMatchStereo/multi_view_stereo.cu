@@ -291,9 +291,9 @@ __device__ __forceinline__ float BilateralWeight(
   const float sigma_spatial, 
   const float sigma_color)
 {
-  // return expf( -sqrtf(x_diff * x_diff + y_diff * y_diff) / sigma_spatial - abs(color_diff) / sigma_color);
-  return expf( -(x_diff * x_diff + y_diff * y_diff) / (2 * sigma_spatial * sigma_spatial) 
-              -(color_diff * color_diff) / (2 * sigma_color * sigma_color));
+  return expf(-(color_diff * color_diff) / (2 * sigma_color * sigma_color));
+  // return expf( -(x_diff * x_diff + y_diff * y_diff) / (2 * sigma_spatial * sigma_spatial) 
+  //             -(color_diff * color_diff) / (2 * sigma_color * sigma_color));
 }
 
 __device__ __forceinline__ float CurandBetween(curandState *curand_map, float min, float max)
@@ -437,7 +437,7 @@ __device__ __forceinline__ float ComputePMCost(
   const float grad_py = grady(tex_ref, rx, ry);
   const float grad_qy = grady(tex_src, sx, sy);
 
-  const float dg = fminf(fabs(grad_px - grad_qx)+ fabs(grad_py - grad_qy), options->tau_grad);
+  const float dg = 0.0625f * fminf(fabs(grad_px - grad_qx)+ fabs(grad_py - grad_qy), options->tau_grad);
   return (1 - options->alpha) * dc + options->alpha * dg;
 }
 
@@ -479,7 +479,6 @@ __device__ __forceinline__ float ComputePMCostRegionBase(
       // float qsx, qsy;
       float qsx, qsy;
       TransformView(Hsr, qx, qy, qsx, qsy);
-      // Warp(view_ref->params_->K_, view_src->params_->K_, R21, t21, qx, qy, idq / 180.0f, qsx, qsy);
       cost += weight * ComputePMCost(view_ref->tex_, view_src->tex_, qx, qy, qsx, qsy, options, height, width);
 
     }
@@ -497,12 +496,11 @@ __device__ __forceinline__ float ComputePMCostRegion(
   int height, int width
 )
 {
-
+  const float kMaxCost = 10000.0f;
   const int pat = options->patch_size / 2;
   float ref_color_center = color(view_ref->tex_, px, py);
 
   float cost = 0.0f;
-  // for(int idx = 0; idx < src_size; ++idx) {
   float Hsr[9];
   GetHomography(
     view_ref->params_->K_, 
@@ -512,6 +510,11 @@ __device__ __forceinline__ float ComputePMCostRegion(
     view_ref->params_->t_,
     view_src->params_->t_,
     px, py, depth, normal, Hsr);
+
+  // float qcx, qcy;
+  // TransformView(Hsr, px, py, qcx, qcy);
+  // if(qcx < 0 || qcx > width - 1 || qcy < 0 || qcy > height - 1) 
+  //   return kMaxCost;
 
   for (int r = -pat; r <= pat; r+=1) {
     const int qy = py + r;
@@ -528,6 +531,7 @@ __device__ __forceinline__ float ComputePMCostRegion(
     }
   }
 
+  // return fminf(kMaxCost, cost);
   return cost;
 }
 
@@ -550,12 +554,12 @@ __device__ __forceinline__ float ComputeBilateralNCC(
 
   float Hsr[9];
   GetHomography(view_ref->params_->K_,
-                    view_src->params_->K_,
-                    view_ref->params_->R_,
-                    view_src->params_->R_,
-                    view_ref->params_->t_,
-                    view_src->params_->t_,
-                    pcx, pcy, depth, normal, Hsr);
+                view_src->params_->K_,
+                view_ref->params_->R_,
+                view_src->params_->R_,
+                view_ref->params_->t_,
+                view_src->params_->t_,
+                pcx, pcy, depth, normal, Hsr);
   // Hsr[0] = 1; Hsr[1] = 0; Hsr[2] = 0;
   // Hsr[3] = 0; Hsr[4] = 1; Hsr[5] = 0;
   // Hsr[6] = 0; Hsr[7] = 0; Hsr[8] = 1;
@@ -639,11 +643,15 @@ __device__ __forceinline__ float ComputeMultiViewPMCost(
   int center = pcx + pcy * width;
   float cost = 0.0f;
   for(int i = 0; i < src_size; ++i) {
-    view_ref->cost_volume_[center * src_size + i] 
+    view_ref->cost_volume_[center * src_size + i] \
       = ComputePMCostRegion(view_ref, view_src[i], pcx, pcy, depth, normal, options, height, width);
     cost += view_ref->cost_volume_[center * src_size + i];
   }
-  return cost / src_size;
+  // return cost / src_size;
+  float *arr = &view_ref->cost_volume_[center * src_size];
+  Sort(arr, src_size);
+  return (arr[0] + arr[1]) / 2.0f;
+  
 }
 
 __device__ __forceinline__ float ComputeMultiViewPhotoConsistency(
@@ -663,9 +671,9 @@ __device__ __forceinline__ float ComputeMultiViewPhotoConsistency(
       = ComputeBilateralNCC(view_ref, view_src[i], pcx, pcy, depth, normal, options, height, width);
     cost += view_ref->cost_volume_[center * src_size + i];
   }
-  // float *arr = &view_ref->cost_volume_[center * src_size];
-  // Sort(arr, src_size);
-  // return (arr[0] + arr[1] + arr[2]) / 3.0f;
+  float *arr = &view_ref->cost_volume_[center * src_size];
+  Sort(arr, src_size);
+  return (arr[0] + arr[1] + arr[2]) / 3.0f;
   return cost / src_size;
 }
 
@@ -1433,9 +1441,9 @@ __device__ __forceinline__ void PropagateSpatial(
 
   const float depth_nb = view_ref->depth_map_[center_nb];
   const float *normal_nb = &view_ref->normal_map_[center_nb*3];
-  // const float cost_nb = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_nb, normal_nb, options, height, width);
-  const float cost_nb = \
-    ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_nb, normal_nb, options, height, width);
+  const float cost_nb = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_nb, normal_nb, options, height, width);
+  // const float cost_nb = \
+  //   ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_nb, normal_nb, options, height, width);
   // const float cost_nb = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_nb, normal_nb, options, height, width);
   // const float cost_nb = \
   //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_nb, normal_nb, options, height, width);
@@ -1490,9 +1498,9 @@ __device__ __forceinline__ void RefinePlane(
     
     float cost_new = 0.0f;
     // perturb depth and original normal
-    // cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_pt, normal_lc, options, height, width);
-    cost_new = \
-      ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_pt, normal_lc, options, height, width);
+    cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_pt, normal_lc, options, height, width);
+    // cost_new = \
+    //   ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_pt, normal_lc, options, height, width);
     // cost_new = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_pt, normal_lc, options, height, width);
     // cost_new = \
     //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_pt, normal_lc, options, height, width);
@@ -1503,9 +1511,9 @@ __device__ __forceinline__ void RefinePlane(
     }
 
     // original depth and perturb normal
-    // cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_lc, normal_pt, options, height, width);
-    cost_new = \
-      ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_lc, normal_pt, options, height, width);
+    cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_lc, normal_pt, options, height, width);
+    // cost_new = \
+    //   ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_lc, normal_pt, options, height, width);
     // cost_new = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_lc, normal_pt, options, height, width);
     // cost_new = \
     //   ComputeMultiViewPhotoConsistency(view_ref, view_src, src_size, x, y, depth_lc, normal_pt, options, height, width);
@@ -1518,9 +1526,9 @@ __device__ __forceinline__ void RefinePlane(
     }
 
     // perturb depth and perturb normal
-    // cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_pt, normal_pt, options, height, width);
-    cost_new = \
-      ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_pt, normal_pt, options, height, width);
+    cost_new = ComputePMCostRegion(view_ref, view_src[0], x, y, depth_pt, normal_pt, options, height, width);
+    // cost_new = \
+    //   ComputeMultiViewPMCost(view_ref, view_src, src_size, x, y, depth_pt, normal_pt, options, height, width);
    
     // cost_new = ComputeBilateralNCC(view_ref, view_src[0], x, y, depth_pt, normal_pt, options, height, width);
     // cost_new = \
@@ -1603,7 +1611,7 @@ __global__ void PropagateRed(
 
 
 
-void MultiViewStereoMatcherCuda::Match(cv::Mat &depth, cv::Mat &normal)
+void MVSMatcherCuda::Match(cv::Mat &depth, cv::Mat &normal)
 {
 
   int block_size_x = 32;
@@ -1681,7 +1689,7 @@ void MultiViewStereoMatcherCuda::Match(cv::Mat &depth, cv::Mat &normal)
 
 }
 
-void MultiViewStereoMatcherCuda::Match(int size)
+void MVSMatcherCuda::Match(int size)
 {
   int block_size_x = 32;
   int block_size_y = 16;
@@ -1702,8 +1710,8 @@ void MultiViewStereoMatcherCuda::Match(int size)
   RandomNormalKernel <<<grid_size, block_size>>>(ref_->normal_map_, ref_->curand_map_, height, width, ref_->params_->K_);
   cudaDeviceSynchronize();
 
-  MultiViewCostInitKernel <<<grid_size, block_size>>>(ref_, src_, size, ref_->depth_map_, ref_->normal_map_, ref_->cost_volume_, ref_->cost_map_, options_, height, width);
-  // CostInitKernel <<<grid_size, block_size>>>(ref_, src_[0], ref_->depth_map_, ref_->normal_map_, ref_->cost_map_, options_, height, width);
+  // MultiViewCostInitKernel <<<grid_size, block_size>>>(ref_, src_, size, ref_->depth_map_, ref_->normal_map_, ref_->cost_volume_, ref_->cost_map_, options_, height, width);
+  CostInitKernel <<<grid_size, block_size>>>(ref_, src_[0], ref_->depth_map_, ref_->normal_map_, ref_->cost_map_, options_, height, width);
   cudaDeviceSynchronize();
 
 

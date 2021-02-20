@@ -83,7 +83,7 @@ public:
 
   // void GetPointCloud(cv::Mat &depth, cv::Mat &normal, int level);
 
-  MultiViewStereoMatcherCuda *matcher_;
+  MVSMatcherCuda *matcher_;
   PatchMatchOptions *options_;
 
   int width_, height_;

@@ -251,6 +251,10 @@ int main(int argc, char** argv)
 
 
   PatchMatchOptions *options = new PatchMatchOptions(0.1f, 50.0f);
+  options->sigma_color = 10.0f;
+  options->sigma_spatial = 15.0f;
+  options->patch_size = 15;
+  options->step_size = 1;
   MVSMatcherWrapper *mvs_matcher = new MVSMatcherWrapper(options, height, width);
 
   const int idx_offset = 740;
@@ -280,23 +284,6 @@ int main(int argc, char** argv)
 
   mvs_matcher->Initialize();
   mvs_matcher->RunDebug();
-
-  Eigen::Vector3f normal;
-  // normal << 0.1f, -0.2f, -1.0f;
-  normal << 0.0f, 0.0f, -1.0f;
-  normal.normalize();
-  float norm[3] = {normal(0), normal(1), normal(2)};
-
-
-  cv::Mat H(3, 3, CV_32F, cv::Scalar(0));
-  GetHomography((float*)K.data,
-                 (float*)K.data, 
-                (float*)Rcws[ref_idx].data,
-                (float*)Rcws[ref_idx].data,
-                (float*)tcws[ref_idx].data,
-                (float*)tcws[ref_idx].data,
-                100, 200, 10.0f, norm, (float*)H.data);
-  std::cout << H << std::endl;
 
   delete mvs_matcher;
   delete options;

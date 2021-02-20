@@ -92,16 +92,20 @@ void MVSMatcherWrapper::Run(cv::Mat &depth, cv::Mat &normal, int level)
 
 void MVSMatcherWrapper::Run(cv::Mat &depth, cv::Mat &normal)
 {
-  matcher_ = new MultiViewStereoMatcherCuda();
+  matcher_ = new MVSMatcherCuda();
   Run(depth, normal, 0);
   ReleaseAll();
 }
 
 void MVSMatcherWrapper::RunBottom()
 {
+  std::cout << "here" << std::endl;
   matcher_->Reset(options_, imgs_src_.size());
+  std::cout << "here" << std::endl;
   matcher_->ref_ = new RefViewType(Kref_, Rrw_, trw_, img_ref_.rows, img_ref_.cols);
+  std::cout << "here" << std::endl;
   CreateTextureObject(img_ref_, matcher_->ref_->tex_, matcher_->ref_->arr_);
+  std::cout << "here" << std::endl;
   matcher_->ref_->Allocate(imgs_src_.size());
 
   assert(imgs_src_.size() == Rsws_.size() == tsws_.size() == Ksrcs_.size());
@@ -119,7 +123,7 @@ void MVSMatcherWrapper::RunBottom()
 
 void MVSMatcherWrapper::RunDebug()
 {
-  matcher_ = new MultiViewStereoMatcherCuda();
+  matcher_ = new MVSMatcherCuda();
   printf("Start to run mvs on cuda!\n");
   RunBottom();
   ReleaseAll();
