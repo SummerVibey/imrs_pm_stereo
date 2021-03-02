@@ -1,6 +1,8 @@
 #ifndef DATA_TYPES_H
 #define DATA_TYPES_H
 
+#include <float.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
@@ -89,7 +91,7 @@ struct PatchMatchOptions : public GlobalMalloc
 	
 	PatchMatchOptions(float _min_depth, float _max_depth) : 
     min_disparity(0.0f), max_disparity(0.5f), min_depth(_min_depth), max_depth(_max_depth),
-    patch_size(7), step_size(1), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
+    patch_size(5), step_size(1), sigma_spatial(3.0f), sigma_color(0.2f), alpha(0.9f), tau_col(10.0f),
     tau_grad(2.0f), num_iters(3), is_check_lr(false), lrcheck_thres(0),
     is_fill_holes(false), is_fource_fpw(false), is_integer_disp(false) {}
 
@@ -542,7 +544,7 @@ public:
 
     params_ = new MultiViewGeometryParams(K, R, t);
     checkCudaErrors(cudaMallocManaged((void **)&depth_map_, sizeof(float) * width_ * height_));
-    checkCudaErrors(cudaMallocManaged((void **)&normal_map_, sizeof(float) * width_ * height_ * 3));
+    checkCudaErrors(cudaMallocManaged((void **)&normal_map_, sizeof(float3) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&cost_map_, sizeof(float) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&curand_map_, sizeof(curandState) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&plane_, sizeof(PlaneState) * width_ * height_));
@@ -554,7 +556,7 @@ public:
     height_ = height;
     params_ = new MultiViewGeometryParams(P);
     checkCudaErrors(cudaMallocManaged((void **)&depth_map_, sizeof(float) * width_ * height_));
-    checkCudaErrors(cudaMallocManaged((void **)&normal_map_, sizeof(float) * width_ * height_ * 3));
+    checkCudaErrors(cudaMallocManaged((void **)&normal_map_, sizeof(float3) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&cost_map_, sizeof(float) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&curand_map_, sizeof(curandState) * width_ * height_));
     checkCudaErrors(cudaMallocManaged((void **)&plane_, sizeof(PlaneState) * width_ * height_));
@@ -577,7 +579,7 @@ public:
     CallSafeDelete(params_);
   }
   float* depth_map_;
-  float* normal_map_;
+  float3* normal_map_;
   float* cost_map_;
   float* cost_volume_;
   curandState* curand_map_;

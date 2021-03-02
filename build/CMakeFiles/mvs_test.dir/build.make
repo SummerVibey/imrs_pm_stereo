@@ -60,15 +60,15 @@ include CMakeFiles/mvs_test.dir/flags.make
 CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.o: CMakeFiles/mvs_test.dir/flags.make
 CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.o: ../PatchMatchStereo/mvs_test.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/mvs_test.cpp
+	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/mvs_test.cpp
 
 CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/mvs_test.cpp > CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.i
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/mvs_test.cpp > CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.i
 
 CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/mvs_test.cpp -o CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.s
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/mvs_test.cpp -o CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.s
 
 CMakeFiles/mvs_test.dir/PatchMatchStereo/mvs_test.cpp.o.requires:
 

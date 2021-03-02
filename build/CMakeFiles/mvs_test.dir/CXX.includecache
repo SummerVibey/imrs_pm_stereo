@@ -27,6 +27,8 @@ vector_types.h
 -
 
 /home/yons/code/imrs_pm_stereo/PatchMatchStereo/data_types.h
+float.h
+-
 opencv2/core/core.hpp
 -
 opencv2/imgproc/imgproc.hpp
@@ -198,6 +200,8 @@ vector
 opencv2/core/core.hpp
 -
 opencv2/core/cuda.hpp
+-
+float.h
 -
 cuda_runtime_api.h
 -

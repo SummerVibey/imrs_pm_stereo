@@ -5,6 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/cuda.hpp>
 
+#include <float.h>
 #include <cuda_runtime_api.h> 
 #include <device_launch_parameters.h> 
 #include <stdio.h>

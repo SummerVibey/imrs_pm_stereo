@@ -60,15 +60,15 @@ include CMakeFiles/patch_match_demo.dir/flags.make
 CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.o: CMakeFiles/patch_match_demo.dir/flags.make
 CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.o: ../PatchMatchStereo/main.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/main.cpp
+	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/main.cpp
 
 CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/main.cpp > CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.i
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/main.cpp > CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.i
 
 CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/main.cpp -o CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.s
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/main.cpp -o CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.s
 
 CMakeFiles/patch_match_demo.dir/PatchMatchStereo/main.cpp.o.requires:
 

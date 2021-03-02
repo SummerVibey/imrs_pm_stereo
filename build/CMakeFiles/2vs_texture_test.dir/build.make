@@ -60,15 +60,15 @@ include CMakeFiles/2vs_texture_test.dir/flags.make
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: CMakeFiles/2vs_texture_test.dir/flags.make
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o: ../PatchMatchStereo/2vs_texture.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/2vs_texture.cpp
+	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/2vs_texture.cpp
 
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/2vs_texture.cpp > CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.i
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/2vs_texture.cpp > CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.i
 
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/2vs_texture.cpp -o CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.s
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/2vs_texture.cpp -o CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.s
 
 CMakeFiles/2vs_texture_test.dir/PatchMatchStereo/2vs_texture.cpp.o.requires:
 

@@ -56,17 +56,6 @@ CMAKE_BINARY_DIR = /home/yons/code/imrs_pm_stereo/build
 #=============================================================================
 # Targets provided globally by CMake.
 
-# Special rule for the target rebuild_cache
-rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/usr/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
-.PHONY : rebuild_cache
-
-# Special rule for the target rebuild_cache
-rebuild_cache/fast: rebuild_cache
-
-.PHONY : rebuild_cache/fast
-
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
@@ -77,6 +66,17 @@ edit_cache:
 edit_cache/fast: edit_cache
 
 .PHONY : edit_cache/fast
+
+# Special rule for the target rebuild_cache
+rebuild_cache:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	/usr/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+.PHONY : rebuild_cache
+
+# Special rule for the target rebuild_cache
+rebuild_cache/fast: rebuild_cache
+
+.PHONY : rebuild_cache/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -109,6 +109,19 @@ preinstall/fast:
 depend:
 	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
+
+#=============================================================================
+# Target rules for targets named icl_demo
+
+# Build rule for target.
+icl_demo: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 icl_demo
+.PHONY : icl_demo
+
+# fast build rule for target.
+icl_demo/fast:
+	$(MAKE) -f CMakeFiles/icl_demo.dir/build.make CMakeFiles/icl_demo.dir/build
+.PHONY : icl_demo/fast
 
 #=============================================================================
 # Target rules for targets named kitti_demo
@@ -353,6 +366,33 @@ PatchMatchStereo/display_utils.cpp.s:
 	$(MAKE) -f CMakeFiles/PatchMatchStereoCuda.dir/build.make CMakeFiles/PatchMatchStereoCuda.dir/PatchMatchStereo/display_utils.cpp.s
 	$(MAKE) -f CMakeFiles/PatchMatchStereo.dir/build.make CMakeFiles/PatchMatchStereo.dir/PatchMatchStereo/display_utils.cpp.s
 .PHONY : PatchMatchStereo/display_utils.cpp.s
+
+PatchMatchStereo/icl_demo.o: PatchMatchStereo/icl_demo.cpp.o
+
+.PHONY : PatchMatchStereo/icl_demo.o
+
+# target to build an object file
+PatchMatchStereo/icl_demo.cpp.o:
+	$(MAKE) -f CMakeFiles/icl_demo.dir/build.make CMakeFiles/icl_demo.dir/PatchMatchStereo/icl_demo.cpp.o
+.PHONY : PatchMatchStereo/icl_demo.cpp.o
+
+PatchMatchStereo/icl_demo.i: PatchMatchStereo/icl_demo.cpp.i
+
+.PHONY : PatchMatchStereo/icl_demo.i
+
+# target to preprocess a source file
+PatchMatchStereo/icl_demo.cpp.i:
+	$(MAKE) -f CMakeFiles/icl_demo.dir/build.make CMakeFiles/icl_demo.dir/PatchMatchStereo/icl_demo.cpp.i
+.PHONY : PatchMatchStereo/icl_demo.cpp.i
+
+PatchMatchStereo/icl_demo.s: PatchMatchStereo/icl_demo.cpp.s
+
+.PHONY : PatchMatchStereo/icl_demo.s
+
+# target to generate assembly for a file
+PatchMatchStereo/icl_demo.cpp.s:
+	$(MAKE) -f CMakeFiles/icl_demo.dir/build.make CMakeFiles/icl_demo.dir/PatchMatchStereo/icl_demo.cpp.s
+.PHONY : PatchMatchStereo/icl_demo.cpp.s
 
 PatchMatchStereo/kitti_demo.o: PatchMatchStereo/kitti_demo.cpp.o
 
@@ -657,8 +697,9 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... rebuild_cache"
+	@echo "... icl_demo"
 	@echo "... kitti_demo"
 	@echo "... qsinghua_demo"
 	@echo "... 2vs_texture_test"
@@ -681,6 +722,9 @@ help:
 	@echo "... PatchMatchStereo/display_utils.o"
 	@echo "... PatchMatchStereo/display_utils.i"
 	@echo "... PatchMatchStereo/display_utils.s"
+	@echo "... PatchMatchStereo/icl_demo.o"
+	@echo "... PatchMatchStereo/icl_demo.i"
+	@echo "... PatchMatchStereo/icl_demo.s"
 	@echo "... PatchMatchStereo/kitti_demo.o"
 	@echo "... PatchMatchStereo/kitti_demo.i"
 	@echo "... PatchMatchStereo/kitti_demo.s"

@@ -34,6 +34,7 @@ include_directories( ${PCL_INCLUDE_DIRS} )
 find_package(Boost 1.55.0 REQUIRED COMPONENTS system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 
+find_package(OpenMP)
 
 set(CUDA_MIN_VERSION "7.0")
 find_package(CUDA ${CUDA_MIN_VERSION} REQUIRED)
@@ -135,8 +136,12 @@ target_link_libraries(kitti_demo
     PatchMatchStereoCuda
     ${THIRD_PARTY_LIBS})
 
-# cuda_add_executable(dtu_demo 
-#     PatchMatchStereo/dtu_demo.cpp)
-# target_link_libraries(dtu_demo
-#     PatchMatchStereoCuda
-#     ${THIRD_PARTY_LIBS})
+cuda_add_executable(icl_demo 
+    PatchMatchStereo/icl_demo.cpp)
+target_link_libraries(icl_demo
+    PatchMatchStereoCuda
+    ${THIRD_PARTY_LIBS})
+
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(icl_demo PUBLIC OpenMP::OpenMP_CXX)
+endif()

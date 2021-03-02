@@ -160,11 +160,11 @@ int main(int argc, char** argv)
 
 	// PMSƥ��������
 	PatchMatchOptions *pms_options = new PatchMatchOptions;
-	pms_options->patch_size = 35;
+	pms_options->patch_size = 19;
 	pms_options->min_disparity = 0.0f;
-	pms_options->max_disparity = 64.0f;
-	pms_options->sigma_color = 4.0f;
-  pms_options->sigma_spatial = 20.0f;
+	pms_options->max_disparity = 96.0f;
+	pms_options->sigma_color = 20.0f;
+  pms_options->sigma_spatial = 30.0f;
 	pms_options->alpha = 0.9f;
 	pms_options->tau_col = 10.0f;
 	pms_options->tau_grad = 2.0f;

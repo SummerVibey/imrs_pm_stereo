@@ -60,15 +60,15 @@ include CMakeFiles/stereo_cuda_test.dir/flags.make
 CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.o: CMakeFiles/stereo_cuda_test.dir/flags.make
 CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.o: ../PatchMatchStereo/stereo_cuda.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/yons/code/imrs_pm_stereo/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/stereo_cuda.cpp
+	/usr/bin/x86_64-linux-gnu-g++-7  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.o -c /home/yons/code/imrs_pm_stereo/PatchMatchStereo/stereo_cuda.cpp
 
 CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/stereo_cuda.cpp > CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.i
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/yons/code/imrs_pm_stereo/PatchMatchStereo/stereo_cuda.cpp > CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.i
 
 CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/stereo_cuda.cpp -o CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.s
+	/usr/bin/x86_64-linux-gnu-g++-7 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/yons/code/imrs_pm_stereo/PatchMatchStereo/stereo_cuda.cpp -o CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.s
 
 CMakeFiles/stereo_cuda_test.dir/PatchMatchStereo/stereo_cuda.cpp.o.requires:
 
